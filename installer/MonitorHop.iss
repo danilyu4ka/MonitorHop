@@ -76,11 +76,11 @@ const
   EventModifyState = $0002;
 
 function OpenEventW(DesiredAccess: Cardinal; InheritHandle: Boolean;
-  Name: String): NativeUInt;
+  Name: String): Cardinal;
   external 'OpenEventW@kernel32.dll stdcall';
-function SetEvent(EventHandle: NativeUInt): Boolean;
+function SetEvent(EventHandle: Cardinal): Boolean;
   external 'SetEvent@kernel32.dll stdcall';
-function CloseHandle(Handle: NativeUInt): Boolean;
+function CloseHandle(Handle: Cardinal): Boolean;
   external 'CloseHandle@kernel32.dll stdcall';
 
 var
@@ -101,7 +101,7 @@ end;
 function StopRunningApp: Boolean;
 var
   Attempt: Integer;
-  EventHandle: NativeUInt;
+  EventHandle: Cardinal;
 begin
   Result := True;
   if not CheckForMutexes(AppMutexName) then
