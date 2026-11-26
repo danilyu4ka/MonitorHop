@@ -36,6 +36,7 @@ $settings.IconOpacityPercent = 65
 $settings.IconSizePercent = 130
 $settingsFormType = $assembly.GetType('MonitorHop.SettingsForm', $true)
 $settingsForm = [System.Activator]::CreateInstance($settingsFormType, @($settings))
+if (-not $settingsForm.TopMost) { throw 'Settings window must open above other applications.' }
 
 $output = Join-Path $PSScriptRoot '..\artifacts'
 New-Item -ItemType Directory -Force $output | Out-Null
@@ -136,6 +137,15 @@ try {
         [System.Windows.Forms.Application]::DoEvents()
         $overlay.DrawToBitmap($overlayBitmap, [System.Drawing.Rectangle]::new(0, 0, $overlayBitmap.Width, $overlayBitmap.Height))
         $overlayBitmap.Save((Join-Path $output 'overlay-map-preview.png'), [System.Drawing.Imaging.ImageFormat]::Png)
+        $overlayType.GetMethod('SetLanguage').Invoke($overlay, @('ru')) | Out-Null
+        [System.Windows.Forms.Application]::DoEvents()
+        $overlay.DrawToBitmap($overlayBitmap, [System.Drawing.Rectangle]::new(0, 0, $overlayBitmap.Width, $overlayBitmap.Height))
+        $overlayBitmap.Save((Join-Path $output 'overlay-map-ru-preview.png'), [System.Drawing.Imaging.ImageFormat]::Png)
+        $overlayType.GetMethod('SetDisplayMode').Invoke($overlay, @($false)) | Out-Null
+        [System.Windows.Forms.Application]::DoEvents()
+        $overlay.DrawToBitmap($overlayBitmap, [System.Drawing.Rectangle]::new(0, 0, $overlayBitmap.Width, $overlayBitmap.Height))
+        $overlayBitmap.Save((Join-Path $output 'overlay-ru-preview.png'), [System.Drawing.Imaging.ImageFormat]::Png)
+        $overlayType.GetMethod('SetDisplayMode').Invoke($overlay, @($true)) | Out-Null
         $tiles = $overlayType.GetMethod('MonitorTiles', $flags).Invoke($overlay, @())
         if ($tiles.Count -ne [System.Windows.Forms.Screen]::AllScreens.Count) {
             throw 'Monitor map does not contain every active screen.'

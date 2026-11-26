@@ -265,14 +265,13 @@ internal sealed class OverlayForm : Form
         using var headingFont = new Font("Segoe UI", 10, FontStyle.Bold);
         using var labelFont = new Font("Segoe UI", 10);
         using var arrowFont = new Font("Segoe UI Symbol", 19, FontStyle.Bold);
-        TextRenderer.DrawText(graphics, Texts.Get(_language,
+        DrawFittedText(graphics, Texts.Get(_language,
                 _showMonitorMap ? "MonitorMapTitle" : "MoveWindow"), headingFont,
-            new Rectangle(14, 15, 226, 27), Color.White,
-            TextFormatFlags.Left | TextFormatFlags.VerticalCenter | TextFormatFlags.NoPadding);
+            new Rectangle(14, 15, 226, 27), Color.White, TextFormatFlags.Left);
         using var hintFont = new Font("Segoe UI", 8);
-        TextRenderer.DrawText(graphics, Texts.Get(_language, "DragHint"), hintFont,
+        DrawFittedText(graphics, Texts.Get(_language, "DragHint"), hintFont,
             new Rectangle(14, 39, 225, 16), Color.FromArgb(171, 206, 223),
-            TextFormatFlags.Left | TextFormatFlags.VerticalCenter | TextFormatFlags.NoPadding);
+            TextFormatFlags.Left);
         graphics.DrawImage(Branding.Image, new Rectangle(247, 3, 43, 43));
 
         if (_showMonitorMap)
@@ -288,23 +287,53 @@ internal sealed class OverlayForm : Form
                 TextRenderer.DrawText(graphics, Glyphs[i], arrowFont,
                     new Rectangle(rectangle.Left + 12, rectangle.Top + 9, 36, 36), ink,
                     TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.NoPadding);
-                TextRenderer.DrawText(graphics, Texts.Get(_language, Directions[i].ToString()), labelFont,
+                DrawFittedText(graphics, Texts.Get(_language, Directions[i].ToString()), labelFont,
                     new Rectangle(rectangle.Left + 52, rectangle.Top + 13, 76, 31), ink,
-                    TextFormatFlags.Left | TextFormatFlags.VerticalCenter | TextFormatFlags.NoPadding);
+                    TextFormatFlags.Left);
             }
         }
 
         var ignore = IgnoreRect();
         PaintButton(graphics, ignore, true, _hovered == 4);
-        TextRenderer.DrawText(graphics, "⊘  " + Texts.Get(_language, "IgnoreApp"), labelFont,
-            ignore, Color.White,
-            TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.NoPadding);
+        DrawFittedText(graphics, "⊘  " + Texts.Get(_language, "IgnoreApp"), labelFont,
+            Rectangle.Inflate(ignore, -10, 0), Color.White, TextFormatFlags.HorizontalCenter);
 
         var settings = SettingsRect();
         PaintButton(graphics, settings, true, _hovered == 5);
-        TextRenderer.DrawText(graphics, "⚙  " + Texts.Get(_language, "Settings"), labelFont,
-            settings, Color.White,
-            TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.NoPadding);
+        DrawFittedText(graphics, "⚙  " + Texts.Get(_language, "Settings"), labelFont,
+            Rectangle.Inflate(settings, -10, 0), Color.White, TextFormatFlags.HorizontalCenter);
+    }
+
+    private static void DrawFittedText(Graphics graphics, string text, Font font,
+        Rectangle bounds, Color color, TextFormatFlags alignment)
+    {
+        const TextFormatFlags flags = TextFormatFlags.SingleLine |
+            TextFormatFlags.VerticalCenter | TextFormatFlags.NoPadding |
+            TextFormatFlags.EndEllipsis | TextFormatFlags.PreserveGraphicsClipping;
+        Font? smaller = null;
+        try
+        {
+            if (TextRenderer.MeasureText(graphics, text, font, Size.Empty,
+                TextFormatFlags.SingleLine | TextFormatFlags.NoPadding).Width <= bounds.Width)
+            {
+                TextRenderer.DrawText(graphics, text, font, bounds, color, flags | alignment);
+                return;
+            }
+            for (float size = font.Size - 0.5f; size >= 7; size -= 0.5f)
+            {
+                Font candidate = new(font.FontFamily, size, font.Style);
+                if (TextRenderer.MeasureText(graphics, text, candidate, Size.Empty,
+                    TextFormatFlags.SingleLine | TextFormatFlags.NoPadding).Width <= bounds.Width)
+                {
+                    smaller = candidate;
+                    break;
+                }
+                candidate.Dispose();
+            }
+            TextRenderer.DrawText(graphics, text, smaller ?? font, bounds, color,
+                flags | alignment);
+        }
+        finally { smaller?.Dispose(); }
     }
 
     private static void PaintButton(Graphics graphics, Rectangle rect, bool enabled, bool hovered)

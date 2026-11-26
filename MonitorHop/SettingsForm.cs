@@ -40,6 +40,7 @@ internal sealed class SettingsForm : Form
 
         StartPosition = FormStartPosition.CenterScreen;
         FormBorderStyle = FormBorderStyle.FixedDialog;
+        TopMost = true;
         MaximizeBox = false;
         MinimizeBox = false;
         ClientSize = new Size(650, 720);
