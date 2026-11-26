@@ -14,7 +14,10 @@ function Run-Hidden([string] $file, [string[]] $arguments) {
 }
 
 function Read-Startup {
-    Get-ItemPropertyValue -Path $runKey -Name MonitorHop -ErrorAction SilentlyContinue
+    if (-not (Test-Path $runKey)) { return $null }
+    $property = (Get-ItemProperty -Path $runKey).PSObject.Properties['MonitorHop']
+    if ($null -eq $property) { return $null }
+    return $property.Value
 }
 
 $arguments = @('/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART', '/LANG=en')
@@ -22,6 +25,7 @@ Run-Hidden $setup ($arguments + '/TASKS=autostart')
 if (-not (Test-Path $installedExe) -or -not (Read-Startup)) {
     throw 'Fresh installation did not create the app and requested startup entry.'
 }
+Write-Output 'Fresh install and startup entry passed.'
 
 $app = Start-Process -FilePath $installedExe -WindowStyle Hidden -PassThru
 Start-Sleep -Seconds 2
@@ -29,12 +33,14 @@ if ($app.HasExited) { throw 'Installed app exited before the update test.' }
 Run-Hidden $setup $arguments
 if (-not $app.WaitForExit(15000)) { throw 'Silent update did not close the running app.' }
 if (-not (Read-Startup)) { throw 'Silent update removed the enabled startup entry.' }
+Write-Output 'Silent update closed the app and preserved enabled startup.'
 
 # Simulate disabling startup in app Settings, then upgrade again with a stale
 # installer task choice. The user's current registry preference must win.
 Remove-ItemProperty -Path $runKey -Name MonitorHop
 Run-Hidden $setup ($arguments + '/TASKS=autostart')
 if (Read-Startup) { throw 'Update re-enabled startup after the user disabled it.' }
+Write-Output 'Second update preserved disabled startup.'
 
 $app = Start-Process -FilePath $installedExe -WindowStyle Hidden -PassThru
 Start-Sleep -Seconds 2
