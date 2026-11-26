@@ -4,3 +4,11 @@
 release/
 install-payload/
 artifacts/
+settings.json
+.env
+.env.*
+!.env.example
+*.pfx
+*.p12
+*.pem
+*.key
