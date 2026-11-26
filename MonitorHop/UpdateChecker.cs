@@ -1,6 +1,5 @@
 using System.Net.Http.Headers;
 using System.Text.Json;
-using Microsoft.Win32;
 
 namespace MonitorHop;
 
@@ -14,19 +13,6 @@ internal static class UpdateChecker
 
     public static Version InstalledVersion => Normalize(
         typeof(UpdateChecker).Assembly.GetName().Version ?? new Version(0, 0));
-
-    // An administrator can disable release checks without modifying user settings.
-    public static bool IsAllowedByPolicy()
-    {
-        try
-        {
-            using var key = Registry.LocalMachine.OpenSubKey(@"SOFTWARE\Policies\MonitorHop");
-            return key?.GetValue("DisableUpdateCheck") is not int value || value != 1;
-        }
-        catch (UnauthorizedAccessException) { return false; }
-        catch (System.Security.SecurityException) { return false; }
-        catch (IOException) { return false; }
-    }
 
     public static async Task<ReleaseInfo?> GetNewerReleaseAsync(CancellationToken cancellationToken)
     {

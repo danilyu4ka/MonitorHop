@@ -1,6 +1,6 @@
 ; Inno Setup 6.7.1. All files and registry changes are per-user.
 #ifndef AppVer
-  #error Pass the application version with /DAppVer=1.5.1.
+  #error Pass the application version with /DAppVer=<version>.
 #endif
 [Setup]
 AppId=MonitorHop

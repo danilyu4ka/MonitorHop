@@ -74,7 +74,7 @@ internal sealed class TrayContext : ApplicationContext
             RefreshOverlay();
             if (_updateCheckStarted) return;
             _updateCheckStarted = true;
-            if (!_settings.CheckForUpdates || !UpdateChecker.IsAllowedByPolicy()) return;
+            if (!_settings.CheckForUpdates) return;
             _ = CheckForUpdatesAsync();
         };
         _timer.Start();
