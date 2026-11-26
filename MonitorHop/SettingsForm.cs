@@ -51,7 +51,7 @@ internal sealed class SettingsForm : Form
         ]);
         _hotkeyLabel = new Label { Left = 22, Top = 115, Width = 600, Height = 23 };
         _modifiers = new ComboBox { Left = 22, Top = 140, Width = 225, DropDownStyle = ComboBoxStyle.DropDownList };
-        _modifiers.Items.AddRange(["Ctrl+Shift+Alt", "Ctrl+Alt", "Ctrl+Shift", "Alt+Shift"]);
+        _modifiers.Items.AddRange(AppSettings.AllowedModifiers);
         _modifiers.SelectedItem = settings.HotkeyModifiers;
         if (_modifiers.SelectedIndex < 0) _modifiers.SelectedIndex = 0;
 
@@ -220,9 +220,7 @@ internal sealed class SettingsForm : Form
 
     private static string NormalizeProcessName(string value)
     {
-        string name = Path.GetFileName(value.Trim());
-        return name.EndsWith(".exe", StringComparison.OrdinalIgnoreCase)
-            ? name[..^4] : name;
+        return AppSettings.NormalizeProcessName(value);
     }
 
     private sealed record LanguageOption(string Code, string Name)

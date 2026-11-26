@@ -2,7 +2,7 @@
 [Setup]
 AppId=MonitorHop
 AppName=MonitorHop
-AppVersion=1.4.0
+AppVersion=1.4.1
 AppPublisher=danilyu4ka
 AppPublisherURL=https://github.com/danilyu4ka
 AppSupportURL=https://github.com/danilyu4ka/MonitorHop

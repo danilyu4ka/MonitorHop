@@ -4,6 +4,8 @@ namespace MonitorHop;
 
 internal static class Program
 {
+    private static int _handlingUiException;
+
     [STAThread]
     private static int Main(string[] args)
     {
@@ -24,8 +26,37 @@ internal static class Program
         }
 
         ApplicationConfiguration.Initialize();
-        Application.Run(new TrayContext());
-        mutex.ReleaseMutex();
+        Application.SetUnhandledExceptionMode(UnhandledExceptionMode.CatchException);
+        Application.ThreadException += OnThreadException;
+        try { Application.Run(new TrayContext()); }
+        finally
+        {
+            Application.ThreadException -= OnThreadException;
+            mutex.ReleaseMutex();
+        }
         return 0;
+    }
+
+    private static void OnThreadException(object? sender, ThreadExceptionEventArgs e) =>
+        HandleUnexpectedError();
+
+    internal static void HandleUnexpectedError()
+    {
+        if (Interlocked.Exchange(ref _handlingUiException, 1) != 0)
+        {
+            Application.Exit();
+            return;
+        }
+
+        try
+        {
+            string language;
+            try { language = AppSettings.Load().Language; }
+            catch { language = Texts.SystemLanguage; }
+            MessageBox.Show(Texts.Get(language, "UnexpectedErrorBody"),
+                Texts.Get(language, "UnexpectedErrorTitle"),
+                MessageBoxButtons.OK, MessageBoxIcon.Error);
+        }
+        finally { Application.Exit(); }
     }
 }

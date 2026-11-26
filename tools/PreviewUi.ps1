@@ -6,6 +6,24 @@ $assembly = [System.Reflection.Assembly]::LoadFrom($assemblyPath)
 $flags = [System.Reflection.BindingFlags]'Instance,NonPublic'
 
 $settingsType = $assembly.GetType('MonitorHop.AppSettings', $true)
+$invalid = [System.Activator]::CreateInstance($settingsType)
+$invalid.HotkeyModifiers = ''
+$invalid.IgnoredProcesses.Add($null)
+$invalid.IgnoredProcesses.Add(' ')
+$invalid.IgnoredProcesses.Add('C:\Apps\game.exe')
+$invalid.IgnoredProcesses.Add('game.exe')
+if (-not $invalid.IsIgnored('game')) { throw 'Ignoring a process must tolerate null entries.' }
+$staticFlags = [System.Reflection.BindingFlags]'Static,NonPublic'
+$normalize = $settingsType.GetMethod('NormalizeLoaded', $staticFlags)
+$normalize.Invoke($null, @($invalid)) | Out-Null
+if ($invalid.HotkeyModifiers -ne 'Ctrl+Shift+Alt' -or $invalid.IgnoredProcesses.Count -ne 1) {
+    throw 'Invalid hotkeys or ignored process names were not normalized.'
+}
+foreach ($badModifier in @('Win', $null)) {
+    $invalid.HotkeyModifiers = $badModifier
+    $normalize.Invoke($null, @($invalid)) | Out-Null
+    if ($invalid.HotkeyModifiers -ne 'Ctrl+Shift+Alt') { throw 'Unsafe hotkey modifier was accepted.' }
+}
 $settings = [System.Activator]::CreateInstance($settingsType)
 $settings.OverlayOffsetX = 73
 $settings.OverlayOffsetY = -25
@@ -14,6 +32,17 @@ $settingsForm = [System.Activator]::CreateInstance($settingsFormType, @($setting
 
 $output = Join-Path $PSScriptRoot '..\artifacts'
 New-Item -ItemType Directory -Force $output | Out-Null
+$settingsCheckPath = Join-Path $output 'settings-save-check.json'
+$saveTo = $settingsType.GetMethod('SaveTo', $flags)
+$saveArguments = [object[]]::new(1)
+$saveArguments[0] = [string]$settingsCheckPath
+$saveTo.Invoke($settings, $saveArguments) | Out-Null
+$settings.Language = 'et'
+$saveTo.Invoke($settings, $saveArguments) | Out-Null
+if ((Get-Content $settingsCheckPath -Raw | ConvertFrom-Json).Language -ne 'et' -or
+    (Test-Path ($settingsCheckPath + '.tmp'))) {
+    throw 'Replacing the settings file failed or left a temporary file.'
+}
 try {
     $settingsForm.Show()
     [System.Windows.Forms.Application]::DoEvents()

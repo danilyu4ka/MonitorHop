@@ -16,6 +16,7 @@ internal sealed class TrayContext : ApplicationContext
     private IntPtr _cachedProcessWindow;
     private uint _cachedProcessId;
     private string _cachedProcessName = "";
+    private SettingsForm? _settingsDialog;
     private AppSettings _settings;
 
     public TrayContext()
@@ -185,19 +186,30 @@ internal sealed class TrayContext : ApplicationContext
         }
         catch (ArgumentException) { RefreshOverlay(); }
         catch (System.ComponentModel.Win32Exception) { RefreshOverlay(); }
+        catch (InvalidOperationException) { RefreshOverlay(); }
     }
 
     private void OpenSettings()
     {
+        if (_settingsDialog is { IsDisposed: false })
+        {
+            _settingsDialog.Activate();
+            return;
+        }
         using var dialog = new SettingsForm(_settings);
-        if (dialog.ShowDialog() != DialogResult.OK) return;
-        _settings = dialog.Result;
-        try { StartupManager.Apply(_settings.StartWithWindows); }
-        catch (UnauthorizedAccessException) { ShowStartupError(); }
-        catch (System.Security.SecurityException) { ShowStartupError(); }
-        _enabledItem.Checked = _settings.Enabled;
-        PersistSettings();
-        ApplySettings();
+        _settingsDialog = dialog;
+        try
+        {
+            if (dialog.ShowDialog() != DialogResult.OK) return;
+            _settings = dialog.Result;
+            try { StartupManager.Apply(_settings.StartWithWindows); }
+            catch (UnauthorizedAccessException) { ShowStartupError(); }
+            catch (System.Security.SecurityException) { ShowStartupError(); }
+            _enabledItem.Checked = _settings.Enabled;
+            PersistSettings();
+            ApplySettings();
+        }
+        finally { _settingsDialog = null; }
     }
 
     private void PersistSettings()
@@ -205,6 +217,7 @@ internal sealed class TrayContext : ApplicationContext
         try { _settings.Save(); }
         catch (IOException) { ShowSaveError(); }
         catch (UnauthorizedAccessException) { ShowSaveError(); }
+        catch (System.Security.SecurityException) { ShowSaveError(); }
     }
 
     private void ShowSaveError() => _tray.ShowBalloonTip(3000,
@@ -261,6 +274,7 @@ internal sealed class TrayContext : ApplicationContext
         {
             Unregister();
             if (modifiers is null) return;
+            if (!AppSettings.AllowedModifiers.Contains(modifiers, StringComparer.Ordinal)) return;
             uint flags = Native.ModNoRepeat;
             if (modifiers.Contains("Ctrl")) flags |= Native.ModControl;
             if (modifiers.Contains("Shift")) flags |= Native.ModShift;
@@ -284,7 +298,10 @@ internal sealed class TrayContext : ApplicationContext
         protected override void WndProc(ref Message message)
         {
             if (message.Msg == Native.WmHotkey && message.WParam.ToInt32() is >= 1 and <= 4)
-                _move((Direction)(message.WParam.ToInt32() - 1));
+            {
+                try { _move((Direction)(message.WParam.ToInt32() - 1)); }
+                catch (Exception) { Program.HandleUnexpectedError(); }
+            }
             base.WndProc(ref message);
         }
 

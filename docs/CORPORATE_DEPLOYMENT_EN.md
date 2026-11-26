@@ -18,6 +18,8 @@ Settings are stored in `%LOCALAPPDATA%\Менялка экрана\settings.json
 
 The release includes `SHA256SUMS.txt` to verify downloaded files. Builds are currently unsigned. Windows SmartScreen or a corporate EDR may warn about an unfamiliar unsigned executable; local policy determines whether it may run. Code signing with an organization or publisher certificate is the appropriate next step for broader managed deployment. MonitorHop does not bypass such controls or request elevation to work around them.
 
+Both release variants bundle .NET 10. Windows Update does not patch their bundled runtime; maintainers must rebuild and publish a new release after relevant .NET security updates.
+
 Source: [danilyu4ka/MonitorHop](https://github.com/danilyu4ka/MonitorHop). License: [MIT](../LICENSE).
 
 The app's MIT License is separate from the [Inno Setup license](https://jrsoftware.org/files/is/license.txt), which permits commercial use. Inno Setup's authors [request a commercial compiler license](https://jrsoftware.org/inno-setup/purchase) from organizations that use the compiler; deploying an already-built installer does not count as compiler use.

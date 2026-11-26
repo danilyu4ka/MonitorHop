@@ -4,6 +4,9 @@ namespace MonitorHop;
 
 internal sealed class AppSettings
 {
+    public static readonly string[] AllowedModifiers =
+        ["Ctrl+Shift+Alt", "Ctrl+Alt", "Ctrl+Shift", "Alt+Shift"];
+
     public bool Enabled { get; set; } = true;
     public bool IgnoreFullscreen { get; set; } = true;
     public bool ShowMonitorMap { get; set; }
@@ -20,34 +23,68 @@ internal sealed class AppSettings
 
     public static AppSettings Load()
     {
+        AppSettings settings;
         try
         {
-            var settings = JsonSerializer.Deserialize<AppSettings>(File.ReadAllText(FilePath)) ?? new();
-            settings.IgnoredProcesses ??= [];
-            settings.Language = Texts.NormalizeLanguage(settings.Language);
-            settings.StartWithWindows = StartupManager.IsEnabled();
-            settings.OverlayOffsetX = Math.Clamp(settings.OverlayOffsetX, -300, 300);
-            settings.OverlayOffsetY = Math.Clamp(settings.OverlayOffsetY, -150, 150);
-            return settings;
+            settings = JsonSerializer.Deserialize<AppSettings>(File.ReadAllText(FilePath)) ?? new();
         }
-        catch (IOException) { return new(); }
-        catch (UnauthorizedAccessException) { return new(); }
-        catch (JsonException) { return new(); }
+        catch (IOException) { settings = new(); }
+        catch (UnauthorizedAccessException) { settings = new(); }
+        catch (JsonException) { settings = new(); }
+
+        return NormalizeLoaded(settings);
     }
 
-    public void Save()
+    internal static AppSettings NormalizeLoaded(AppSettings settings)
     {
-        Directory.CreateDirectory(Path.GetDirectoryName(FilePath)!);
-        File.WriteAllText(FilePath, JsonSerializer.Serialize(this, new JsonSerializerOptions
+        settings.Language = Texts.NormalizeLanguage(settings.Language);
+        if (!AllowedModifiers.Contains(settings.HotkeyModifiers, StringComparer.Ordinal))
+            settings.HotkeyModifiers = AllowedModifiers[0];
+        settings.IgnoredProcesses = (settings.IgnoredProcesses ?? [])
+            .Select(NormalizeProcessName)
+            .Where(name => name.Length > 0)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .Select(name => name + ".exe")
+            .ToList();
+        settings.StartWithWindows = StartupManager.IsEnabled();
+        settings.OverlayOffsetX = Math.Clamp(settings.OverlayOffsetX, -300, 300);
+        settings.OverlayOffsetY = Math.Clamp(settings.OverlayOffsetY, -150, 150);
+        return settings;
+    }
+
+    public void Save() => SaveTo(FilePath);
+
+    internal void SaveTo(string path)
+    {
+        string directory = Path.GetDirectoryName(path)!;
+        Directory.CreateDirectory(directory);
+        string temporary = path + ".tmp";
+        try
         {
-            WriteIndented = true
-        }));
+            File.WriteAllText(temporary, JsonSerializer.Serialize(this, new JsonSerializerOptions
+            {
+                WriteIndented = true
+            }));
+            File.Move(temporary, path, true);
+        }
+        finally
+        {
+            try { if (File.Exists(temporary)) File.Delete(temporary); }
+            catch (IOException) { }
+            catch (UnauthorizedAccessException) { }
+        }
     }
 
-    public bool IsIgnored(string processName) => IgnoredProcesses.Any(item =>
+    public bool IsIgnored(string processName) => (IgnoredProcesses ?? []).Any(item =>
+        string.Equals(NormalizeProcessName(item), processName, StringComparison.OrdinalIgnoreCase));
+
+    public static string NormalizeProcessName(string? value)
     {
-        string name = Path.GetFileName(item.Trim());
+        if (string.IsNullOrWhiteSpace(value)) return "";
+        string name = value.Trim();
+        int lastSeparator = Math.Max(name.LastIndexOf('\\'), name.LastIndexOf('/'));
+        if (lastSeparator >= 0) name = name[(lastSeparator + 1)..];
         if (name.EndsWith(".exe", StringComparison.OrdinalIgnoreCase)) name = name[..^4];
-        return string.Equals(name, processName, StringComparison.OrdinalIgnoreCase);
-    });
+        return name.Trim();
+    }
 }

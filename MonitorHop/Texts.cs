@@ -7,6 +7,8 @@ internal static class Texts
         ["AppName"] = ("MonitorHop", "MonitorHop", "MonitorHop"),
         ["WaitingSecondMonitor"] = ("MonitorHop — ждёт второй монитор", "MonitorHop — waiting for a second monitor", "MonitorHop — ootab teist kuvarit"),
         ["AlreadyRunning"] = ("MonitorHop уже запущен. Настройки доступны через значок в трее.", "MonitorHop is already running. Open settings from the tray icon.", "MonitorHop juba töötab. Ava seaded süsteemisalve ikoonist."),
+        ["UnexpectedErrorTitle"] = ("Ошибка MonitorHop", "MonitorHop error", "MonitorHopi viga"),
+        ["UnexpectedErrorBody"] = ("Произошла непредвиденная ошибка. MonitorHop завершит работу. Запустите его снова через меню «Пуск».", "An unexpected error occurred. MonitorHop will close. Start it again from the Start menu.", "Tekkis ootamatu viga. MonitorHop sulgub. Käivita see uuesti menüüst Start."),
         ["Enabled"] = ("Включено", "Enabled", "Sisse lülitatud"),
         ["Settings"] = ("Настройки…", "Settings…", "Seaded…"),
         ["Exit"] = ("Выход", "Exit", "Välju"),
