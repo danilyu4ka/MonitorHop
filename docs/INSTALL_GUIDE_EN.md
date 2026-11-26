@@ -40,7 +40,7 @@ To ignore an application, use **Ignore this app** in the overlay menu, or tick i
 
 ## 5. Uninstall
 
-Open **Windows Settings → Apps → Installed apps**, find **MonitorHop**, and select **Uninstall**. This removes the installed executable, shortcuts, and Windows startup entry. Your settings file remains at `%LOCALAPPDATA%\Менялка экрана\settings.json` so preferences can be restored after reinstalling.
+Open **Windows Settings → Apps → Installed apps**, find **MonitorHop**, and select **Uninstall**. This removes the installed executable, shortcuts, and Windows startup entry. Your settings file remains at `%LOCALAPPDATA%\MonitorHop\settings.json` so preferences can be restored after reinstalling.
 
 ## Build from source
 

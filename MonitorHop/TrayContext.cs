@@ -38,7 +38,7 @@ internal sealed class TrayContext : ApplicationContext
         _hotkeyWindow = new HotkeyWindow(Move);
 
         var menu = new ContextMenuStrip();
-        _enabledItem = new ToolStripMenuItem("Включено")
+        _enabledItem = new ToolStripMenuItem("Enabled")
         {
             Checked = _settings.Enabled, CheckOnClick = true
         };
@@ -50,10 +50,10 @@ internal sealed class TrayContext : ApplicationContext
             ApplySettings();
         };
         menu.Items.Add(_enabledItem);
-        _settingsItem = new ToolStripMenuItem("Настройки…", null, (_, _) => OpenSettings());
+        _settingsItem = new ToolStripMenuItem("Settings…", null, (_, _) => OpenSettings());
         menu.Items.Add(_settingsItem);
         menu.Items.Add(new ToolStripSeparator());
-        _exitItem = new ToolStripMenuItem("Выход", null, (_, _) => ExitThread());
+        _exitItem = new ToolStripMenuItem("Exit", null, (_, _) => ExitThread());
         menu.Items.Add(_exitItem);
 
         _tray = new NotifyIcon

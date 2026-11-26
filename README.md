@@ -1,29 +1,33 @@
-# MonitorHop — Менялка экрана
+# MonitorHop
 
-[English illustrated installation guide](docs/INSTALL_GUIDE_EN.md)
+A small Windows 10/11 utility for moving the active window between monitors. [Download the installer](https://github.com/danilyu4ka/MonitorHop/releases/latest/download/MonitorHop-Setup.exe) or follow the [illustrated installation guide](docs/INSTALL_GUIDE_EN.md).
 
-Автор: [danilyu4ka](https://github.com/danilyu4ka). Лицензия: [MIT](LICENSE). [Описание для корпоративного развёртывания](docs/CORPORATE_DEPLOYMENT_EN.md).
+Created by [danilyu4ka](https://github.com/danilyu4ka). Licensed under [MIT](LICENSE). See the [corporate deployment notes](docs/CORPORATE_DEPLOYMENT_EN.md) for the install footprint and security details.
 
-Утилита для Windows 10/11. При двух и более активных мониторах полупрозрачная кнопка появляется справа вверху активного окна, рядом с системными кнопками. При наведении открывается меню с отдельными кнопками переноса влево, вправо, вверх и вниз. В настройках можно заменить стрелки картой фактического расположения мониторов и выбирать экран нажатием на его прямоугольник. Окно перемещается примерно в то же относительное положение на выбранном мониторе; развёрнутое окно остаётся развёрнутым. Если активен только один монитор, приложение остаётся в трее, скрывает оверлей и снова показывает его после подключения второго экрана.
+## How it works
 
-Если кнопка перекрывает элемент окна, перетащите её мышью. Раскрытое меню можно двигать за логотип справа вверху. Смещение сохраняется и применяется к другим окнам; область перемещения ограничена окрестностью заголовка.
+When at least two monitors are active, a small translucent button appears beside the upper-right controls of the active window. Hover over it to open the move menu. Choose a direction or switch to a map that shows the actual monitor arrangement. MonitorHop places the window at approximately the same relative position on the destination monitor. Maximized windows remain maximized.
 
-## Установка и запуск
+With one monitor, MonitorHop stays in the tray and hides the overlay until another display is connected. If the button covers a window control, drag it to a nearby position. You can also drag the open menu by its upper-right logo. The offset is saved and applied to other windows.
 
-- [MonitorHop-Setup.exe](https://github.com/danilyu4ka/MonitorHop/releases/latest/download/MonitorHop-Setup.exe) — стандартный установщик Inno Setup с классическим мастером. Сначала предлагает русский, английский или эстонский язык; по умолчанию выбран язык Windows, если он поддерживается, иначе английский. Создаёт ярлыки на рабочем столе и в меню «Пуск», а также запись **MonitorHop → Удалить** в разделе «Установленные приложения» Windows.
-- `release/MonitorHop.exe` — переносимая версия. Это один автономный EXE, которому не нужна отдельная установка .NET.
+## Install and run
 
-Установка выполняется только для текущего пользователя в `%LOCALAPPDATA%\Programs\MonitorHop`; права администратора не нужны. Установщик использует штатное удаление Inno Setup и не запускает временную копию EXE для удаления. Ярлыки на рабочем столе и в «Пуске» запускают приложение или перезапускают уже работающий экземпляр. Приложение работает в трее. Двойной щелчок по значку в трее открывает настройки. Через контекстное меню в трее функцию можно выключить или завершить программу. Удаление через Windows убирает приложение, ярлыки, автозапуск и запись в списке приложений. Пользовательские настройки остаются, чтобы их можно было восстановить при повторной установке.
+- [MonitorHop-Setup.exe](https://github.com/danilyu4ka/MonitorHop/releases/latest/download/MonitorHop-Setup.exe) is a classic Inno Setup wizard. It offers English, Russian, and Estonian. The system language is selected when supported; otherwise English is selected. It creates desktop and Start menu shortcuts and a standard entry in **Windows Settings → Apps → Installed apps**.
+- [MonitorHop.exe](https://github.com/danilyu4ka/MonitorHop/releases/latest/download/MonitorHop.exe) is a portable, self-contained single executable.
 
-## Управление
+The installer works for the current user without administrator rights and installs under `%LOCALAPPDATA%\Programs\MonitorHop`. Use the shortcuts to start or restart the app. Double-click the tray icon for Settings; right-click it to disable the overlay or exit. Windows uninstall removes the app, shortcuts, startup entry, and uninstall entry. Settings remain for a future reinstall.
 
-По умолчанию горячие клавиши: **Ctrl+Shift+Alt + стрелка**. В настройках можно изменить модификаторы, выбрать русский, английский или эстонский язык, включить запуск вместе с Windows, автоматическое игнорирование полноэкранных приложений и карту мониторов вместо стрелок. Галочка игнорирования полноэкранных приложений включена по умолчанию.
+## Controls and settings
 
-В раскрытом меню оверлея есть кнопка **«Игнорировать приложение»**. В настройках показываются только приложения с видимыми окнами на подключённых экранах; нужные процессы можно отметить галочками. Через раздел **Advanced** можно редактировать полный список игнорируемых имён, включая приложения, которые сейчас не открыты. Запись действует для всех экземпляров процесса с этим именем. Настройки хранятся в `%LOCALAPPDATA%\Менялка экрана\settings.json`.
+The default shortcut is **Ctrl+Shift+Alt + arrow key**. Settings lets you change the modifiers, select the interface language, start with Windows, ignore full-screen apps, or show the monitor map instead of arrows. Full-screen apps are ignored by default.
 
-Некоторые приложения с повышенными правами или собственным управлением окнами могут не перемещаться. Перенос окна, закреплённого через Snap, может снять закрепление.
+Use **Ignore this app** in the overlay to ignore the current application. Settings lists applications with visible windows on the connected displays; tick the ones to ignore. **Advanced** accepts process names manually, including apps that are not currently open. An ignored process name applies to all its instances.
 
-## Сборка
+Settings are stored in `%LOCALAPPDATA%\MonitorHop\settings.json`. Version 1.4.2 and later move an existing settings file from the previous folder on first launch. Some elevated apps or apps that manage their own windows may resist movement. Moving a snapped window can remove its Snap placement.
+
+## Build from source
+
+Install the .NET 10 SDK and Inno Setup 6, then run:
 
 ```powershell
 dotnet publish MonitorHop/MonitorHop.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=false -p:PublishTrimmed=false -p:DebugType=None -p:DebugSymbols=false -o install-payload
@@ -31,4 +35,4 @@ dotnet publish MonitorHop/MonitorHop.csproj -c Release -r win-x64 --self-contain
 dotnet publish MonitorHop/MonitorHop.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:PublishTrimmed=false -p:DebugType=None -p:DebugSymbols=false -o release
 ```
 
-Для сборки установщика нужен Inno Setup 6. Установленная версия содержит обычные файлы .NET без распаковки во временную папку при запуске; переносимая версия остаётся одним EXE.
+The installed build keeps the .NET files under the app directory, while the portable build is one executable.

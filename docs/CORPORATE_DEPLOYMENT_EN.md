@@ -12,7 +12,7 @@ The selected installer language is written to the user settings file on a fresh 
 
 MonitorHop runs as a normal interactive user process. It checks the foreground window twice per second, reads its window bounds and process name, and displays a small overlay when at least two monitors are active. It uses standard Windows window APIs to move a selected window. Global hotkeys use `RegisterHotKey`; they can be turned off in Settings. The app does not install a service, driver, browser extension, global event hook, or code in another process. It has no network, update, telemetry, or screen capture feature.
 
-Settings are stored in `%LOCALAPPDATA%\Менялка экрана\settings.json`. Uninstall removes the installed app, shortcuts, uninstall entry, and startup value. It keeps this settings file for a future reinstall.
+Settings are stored in `%LOCALAPPDATA%\MonitorHop\settings.json`. On first launch after updating from an older version, MonitorHop moves an existing settings file from the former folder to this location. Uninstall removes the installed app, shortcuts, uninstall entry, and startup value. It keeps the settings file for a future reinstall.
 
 ## Review and trust
 

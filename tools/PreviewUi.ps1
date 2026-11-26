@@ -32,6 +32,28 @@ $settingsForm = [System.Activator]::CreateInstance($settingsFormType, @($setting
 
 $output = Join-Path $PSScriptRoot '..\artifacts'
 New-Item -ItemType Directory -Force $output | Out-Null
+$legacySettingsPath = Join-Path $output 'legacy-settings\settings.json'
+$currentSettingsPath = Join-Path $output 'current-settings\settings.json'
+New-Item -ItemType Directory -Force (Split-Path $legacySettingsPath) | Out-Null
+Remove-Item -LiteralPath $currentSettingsPath -ErrorAction SilentlyContinue
+Set-Content -LiteralPath $legacySettingsPath -Value '{"Language":"et"}' -Encoding utf8
+$migrate = $settingsType.GetMethod('MigrateSettingsFile', $staticFlags)
+$migrationArguments = [object[]]::new(2)
+$migrationArguments[0] = [string]$legacySettingsPath
+$migrationArguments[1] = [string]$currentSettingsPath
+$migrate.Invoke($null, $migrationArguments) | Out-Null
+if (-not (Test-Path $currentSettingsPath) -or (Test-Path $legacySettingsPath) -or
+    (Test-Path (Split-Path $legacySettingsPath)) -or
+    (Get-Content $currentSettingsPath -Raw | ConvertFrom-Json).Language -ne 'et') {
+    throw 'Legacy settings were not moved to the new directory.'
+}
+New-Item -ItemType Directory -Force (Split-Path $legacySettingsPath) | Out-Null
+Set-Content -LiteralPath $legacySettingsPath -Value '{"Language":"ru"}' -Encoding utf8
+$migrate.Invoke($null, $migrationArguments) | Out-Null
+if ((Get-Content $currentSettingsPath -Raw | ConvertFrom-Json).Language -ne 'et' -or
+    -not (Test-Path $legacySettingsPath)) {
+    throw 'Migration replaced existing settings.'
+}
 $settingsCheckPath = Join-Path $output 'settings-save-check.json'
 $saveTo = $settingsType.GetMethod('SaveTo', $flags)
 $saveArguments = [object[]]::new(1)

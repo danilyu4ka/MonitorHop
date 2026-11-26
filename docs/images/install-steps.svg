@@ -9,7 +9,7 @@
       <rect x="509" y="30" width="202" height="22" rx="7"/><rect x="751" y="30" width="202" height="22" rx="7"/></g>
     <g fill="#132b4c" font-size="17" font-weight="600"><text x="126" y="93">1. Language</text><text x="368" y="93">2. License</text>
       <text x="610" y="93">3. Options</text><text x="852" y="93">4. Finish</text></g>
-    <g fill="#536678" font-size="12"><text x="126" y="116">English · Русский · Eesti</text><text x="368" y="116">MIT License</text>
+    <g fill="#536678" font-size="12"><text x="126" y="116">English · Russian · Estonian</text><text x="368" y="116">MIT License</text>
       <text x="610" y="116">Startup is optional</text><text x="852" y="116">Launch MonitorHop</text></g>
     <g fill="#479fca" font-size="26"><text x="247" y="102">›</text><text x="489" y="102">›</text><text x="731" y="102">›</text></g>
   </g>

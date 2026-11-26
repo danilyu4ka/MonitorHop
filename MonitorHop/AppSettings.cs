@@ -19,10 +19,15 @@ internal sealed class AppSettings
 
     private static readonly string FilePath = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-        "Менялка экрана", "settings.json");
+        "MonitorHop", "settings.json");
+    // The directory used before version 1.4.2. Keep this only for migration.
+    private static readonly string LegacyFilePath = Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+        "\u041C\u0435\u043D\u044F\u043B\u043A\u0430 \u044D\u043A\u0440\u0430\u043D\u0430", "settings.json");
 
     public static AppSettings Load()
     {
+        MigrateSettingsFile(LegacyFilePath, FilePath);
         AppSettings settings;
         try
         {
@@ -31,8 +36,41 @@ internal sealed class AppSettings
         catch (IOException) { settings = new(); }
         catch (UnauthorizedAccessException) { settings = new(); }
         catch (JsonException) { settings = new(); }
+        catch (System.Security.SecurityException) { settings = new(); }
 
         return NormalizeLoaded(settings);
+    }
+
+    internal static void MigrateSettingsFile(string legacyPath, string currentPath)
+    {
+        if (!File.Exists(legacyPath) || File.Exists(currentPath)) return;
+
+        string currentDirectory = Path.GetDirectoryName(currentPath)!;
+        string temporaryPath = currentPath + ".migration.tmp";
+        try
+        {
+            Directory.CreateDirectory(currentDirectory);
+            File.Copy(legacyPath, temporaryPath, true);
+            File.Move(temporaryPath, currentPath);
+        }
+        catch (IOException) { return; }
+        catch (UnauthorizedAccessException) { return; }
+        catch (System.Security.SecurityException) { return; }
+        finally
+        {
+            try { if (File.Exists(temporaryPath)) File.Delete(temporaryPath); }
+            catch (IOException) { }
+            catch (UnauthorizedAccessException) { }
+        }
+
+        try
+        {
+            File.Delete(legacyPath);
+            Directory.Delete(Path.GetDirectoryName(legacyPath)!);
+        }
+        catch (IOException) { }
+        catch (UnauthorizedAccessException) { }
+        catch (System.Security.SecurityException) { }
     }
 
     internal static AppSettings NormalizeLoaded(AppSettings settings)

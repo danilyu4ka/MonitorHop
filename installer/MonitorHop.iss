@@ -2,7 +2,7 @@
 [Setup]
 AppId=MonitorHop
 AppName=MonitorHop
-AppVersion=1.4.1
+AppVersion=1.4.2
 AppPublisher=danilyu4ka
 AppPublisherURL=https://github.com/danilyu4ka
 AppSupportURL=https://github.com/danilyu4ka/MonitorHop
@@ -65,6 +65,7 @@ procedure CurStepChanged(CurStep: TSetupStep);
 var
   SettingsDir: String;
   SettingsFile: String;
+  LegacySettingsFile: String;
 begin
   if CurStep <> ssPostInstall then
     Exit;
@@ -74,9 +75,12 @@ begin
 
   { Keep existing user preferences. The selected setup language becomes the
     app language only for a new installation. }
-  SettingsDir := ExpandConstant('{localappdata}\Менялка экрана');
+  SettingsDir := ExpandConstant('{localappdata}\MonitorHop');
   SettingsFile := SettingsDir + '\settings.json';
-  if not FileExists(SettingsFile) then
+  LegacySettingsFile := ExpandConstant('{localappdata}\Менялка экрана\settings.json');
+  { The app moves old settings on its first run. Do not create a new language
+    file before that migration can happen. }
+  if not FileExists(SettingsFile) and not FileExists(LegacySettingsFile) then
   begin
     if ForceDirectories(SettingsDir) then
       SaveStringToFile(SettingsFile, '{"Language":"' + ActiveLanguage + '"}', False);
