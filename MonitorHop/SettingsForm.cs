@@ -6,6 +6,7 @@ internal sealed class SettingsForm : Form
     private readonly CheckBox _startup;
     private readonly CheckBox _fullscreen;
     private readonly CheckBox _monitorMap;
+    private readonly CheckBox _checkUpdates;
     private readonly ComboBox _language;
     private readonly ComboBox _modifiers;
     private readonly Label _languageLabel;
@@ -62,20 +63,21 @@ internal sealed class SettingsForm : Form
         _startup = new CheckBox { Left = 22, Top = 180, Width = 600, Height = 26, Checked = settings.StartWithWindows };
         _fullscreen = new CheckBox { Left = 22, Top = 211, Width = 600, Height = 26, Checked = settings.IgnoreFullscreen };
         _monitorMap = new CheckBox { Left = 22, Top = 242, Width = 600, Height = 26, Checked = settings.ShowMonitorMap };
-        _opacityLabel = new Label { Left = 22, Top = 279, Width = 280, Height = 23 };
-        _sizeLabel = new Label { Left = 335, Top = 279, Width = 290, Height = 23 };
-        _opacity = new TrackBar { Left = 15, Top = 303, Width = 290, Height = 45,
+        _checkUpdates = new CheckBox { Left = 22, Top = 273, Width = 600, Height = 26, Checked = settings.CheckForUpdates };
+        _opacityLabel = new Label { Left = 22, Top = 305, Width = 280, Height = 23 };
+        _sizeLabel = new Label { Left = 335, Top = 305, Width = 290, Height = 23 };
+        _opacity = new TrackBar { Left = 15, Top = 329, Width = 290, Height = 45,
             Minimum = 30, Maximum = 100, TickFrequency = 10,
             Value = Math.Clamp(settings.IconOpacityPercent, 30, 100) };
-        _size = new TrackBar { Left = 328, Top = 303, Width = 300, Height = 45,
+        _size = new TrackBar { Left = 328, Top = 329, Width = 300, Height = 45,
             Minimum = 60, Maximum = 160, TickFrequency = 20,
             Value = Math.Clamp(settings.IconSizePercent, 60, 160) };
-        _processLabel = new Label { Left = 22, Top = 357, Width = 600, Height = 23 };
-        _search = new TextBox { Left = 22, Top = 384, Width = 480, Height = 28 };
-        _refresh = new Button { Left = 512, Top = 382, Width = 115, Height = 30 };
+        _processLabel = new Label { Left = 22, Top = 382, Width = 600, Height = 23 };
+        _search = new TextBox { Left = 22, Top = 408, Width = 480, Height = 28 };
+        _refresh = new Button { Left = 512, Top = 406, Width = 115, Height = 30 };
         _processes = new ListView
         {
-            Left = 22, Top = 421, Width = 605, Height = 157,
+            Left = 22, Top = 445, Width = 605, Height = 133,
             View = View.Details, CheckBoxes = true, FullRowSelect = true,
             HideSelection = false, MultiSelect = false
         };
@@ -101,7 +103,8 @@ internal sealed class SettingsForm : Form
         _cancel = new Button { Left = 530, Top = 679, Width = 97, Height = 30, DialogResult = DialogResult.Cancel };
 
         Controls.AddRange([_enabled, _languageLabel, _language, _hotkeyLabel, _modifiers,
-            _startup, _fullscreen, _monitorMap, _opacityLabel, _sizeLabel, _opacity, _size,
+            _startup, _fullscreen, _monitorMap, _checkUpdates,
+            _opacityLabel, _sizeLabel, _opacity, _size,
             _processLabel, _search, _refresh, _processes,
             _advancedToggle, _advanced, _addNames, _hint, _save, _cancel]);
         AcceptButton = _save;
@@ -141,6 +144,7 @@ internal sealed class SettingsForm : Form
                 StartWithWindows = _startup.Checked,
                 IgnoreFullscreen = _fullscreen.Checked,
                 ShowMonitorMap = _monitorMap.Checked,
+                CheckForUpdates = _checkUpdates.Checked,
                 IconOpacityPercent = _opacity.Value,
                 IconSizePercent = _size.Value,
                 OverlayOffsetX = Result.OverlayOffsetX,
@@ -167,6 +171,7 @@ internal sealed class SettingsForm : Form
         _startup.Text = T("StartupSetting");
         _fullscreen.Text = T("FullscreenSetting");
         _monitorMap.Text = T("MonitorMapSetting");
+        _checkUpdates.Text = T("UpdateCheckSetting");
         ApplyAppearanceLabels();
         _processLabel.Text = T("ProcessList");
         _search.PlaceholderText = T("SearchProcesses");

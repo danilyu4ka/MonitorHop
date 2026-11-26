@@ -12,9 +12,9 @@ The **Select Setup Language** dialog appears before the wizard. Choose English, 
 
 ## 2. Continue through the wizard
 
-Read and accept the MIT License, then continue through the classic wizard. On **Additional Tasks**, optionally select **Start MonitorHop with Windows**. This option is off by default. The program installs under `%LOCALAPPDATA%\Programs\MonitorHop` and creates desktop and Start menu shortcuts.
+Read and accept the MIT License, then continue through the classic wizard. On a fresh installation, **Additional Tasks** lets you select **Start MonitorHop with Windows**. This option is off by default; after installation, control it in MonitorHop Settings. The program installs under `%LOCALAPPDATA%\Programs\MonitorHop` and creates desktop and Start menu shortcuts.
 
-Click **Install**. When setup completes, leave **Launch MonitorHop** selected and click **Finish**. To update an existing installation, exit MonitorHop from its tray menu before running setup. Your existing preferences are preserved.
+Click **Install**. When setup completes, leave **Launch MonitorHop** selected and click **Finish**. On an update, setup asks a running MonitorHop to exit before replacing files. Your existing preferences, including Windows startup, are preserved.
 
 MonitorHop runs in the Windows notification area. Double-click its tray icon to open Settings; right-click it to disable the overlay or exit the app. If only one monitor is active, MonitorHop keeps running in the tray and hides its overlay until a second monitor is connected.
 
@@ -32,13 +32,13 @@ For a nonstandard monitor layout, open Settings and select **Show monitor map in
 
 ## 4. Adjust settings and ignored apps
 
-Settings lets you change the language, hotkey modifiers, Windows startup, full-screen app handling, and the monitor map. Two sliders adjust the collapsed button's opacity and size. Full-screen apps are ignored by default.
+Settings lets you change the language, hotkey modifiers, Windows startup, full-screen app handling, the monitor map, and startup update checks. Two sliders adjust the collapsed button's opacity and size. Full-screen apps are ignored by default.
 
 ![MonitorHop settings in English](images/settings-en.png)
 
 To ignore an application, use **Ignore this app** in the overlay menu, or tick it in the Settings list. This list shows only apps with visible windows on your screens. The **Advanced** section accepts process names manually, including apps that are not currently running.
 
-When MonitorHop starts, it checks the latest public GitHub release once. If that version is newer than yours, choose **Yes** to open its release page. Download the installer there, exit MonitorHop from the tray, and run the installer. Your settings stay in place. A failed or offline check does not interrupt startup.
+When MonitorHop starts, it checks the latest public GitHub release once, unless you turn the check off in Settings. If that version is newer than yours, choose **Yes** to open its release page. Download and run the installer there; it closes MonitorHop before replacing files. Your settings stay in place. A failed or offline check does not interrupt startup.
 
 ## 5. Uninstall
 
@@ -49,8 +49,9 @@ Open **Windows Settings → Apps → Installed apps**, find **MonitorHop**, and 
 The project targets Windows x64 and .NET 10. To create the installer, install Inno Setup 6 and run:
 
 ```powershell
-dotnet publish MonitorHop/MonitorHop.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=false -p:PublishTrimmed=false -p:DebugType=None -p:DebugSymbols=false -o install-payload
-& "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" installer/MonitorHop.iss
+$version = (dotnet msbuild MonitorHop/MonitorHop.csproj -getProperty:Version).Trim()
+dotnet publish MonitorHop/MonitorHop.csproj -c Release -r win-x64 --self-contained true -p:Version=$version -p:PublishSingleFile=false -p:PublishTrimmed=false -p:DebugType=None -p:DebugSymbols=false -o install-payload
+& "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" "/DAppVer=$version" installer/MonitorHop.iss
 ```
 
 For the portable single EXE, use the `dotnet publish` command in the [main README](../README.md). See the [corporate deployment notes](CORPORATE_DEPLOYMENT_EN.md) for the install footprint and security-relevant behavior. The source is available under the [MIT License](../LICENSE) from [danilyu4ka](https://github.com/danilyu4ka).

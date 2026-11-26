@@ -74,6 +74,7 @@ internal sealed class TrayContext : ApplicationContext
             RefreshOverlay();
             if (_updateCheckStarted) return;
             _updateCheckStarted = true;
+            if (!_settings.CheckForUpdates || !UpdateChecker.IsAllowedByPolicy()) return;
             _ = CheckForUpdatesAsync();
         };
         _timer.Start();
@@ -332,7 +333,7 @@ internal sealed class TrayContext : ApplicationContext
             if (message.Msg == Native.WmHotkey && message.WParam.ToInt32() is >= 1 and <= 4)
             {
                 try { _move((Direction)(message.WParam.ToInt32() - 1)); }
-                catch (Exception) { Program.HandleUnexpectedError(); }
+                catch (Exception error) { Program.HandleUnexpectedError(error); }
             }
             base.WndProc(ref message);
         }

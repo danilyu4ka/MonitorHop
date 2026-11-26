@@ -33,20 +33,21 @@ The installer works for the current user without administrator rights and instal
 
 The default shortcut is **Ctrl+Shift+Alt + arrow key**. Settings lets you change the modifiers, select the interface language, start with Windows, ignore full-screen apps, show the monitor map instead of arrows, and adjust the collapsed button's opacity (30–100%) and size (60–160%). Full-screen apps are ignored by default.
 
-Once per launch, MonitorHop checks the latest published [GitHub release](https://github.com/danilyu4ka/MonitorHop/releases). If its version is newer, a prompt offers to open that release page in your browser. You decide whether to download and run the installer; the app does not download or execute updates itself. Exit MonitorHop from the tray before running an updated installer. The check requires the repository to be public and an internet connection; a failed check is silent.
+Once per launch, MonitorHop checks the latest published [GitHub release](https://github.com/danilyu4ka/MonitorHop/releases), unless you turn off **Check for updates at startup** in Settings. If its version is newer, a prompt offers to open that release page in your browser. You decide whether to download and run the installer; the app does not download or execute updates itself. The installer closes a running MonitorHop before replacing files. A failed or offline check is silent.
 
 Use **Ignore this app** in the overlay to ignore the current application. Settings lists applications with visible windows on the connected displays; tick the ones to ignore. **Advanced** accepts process names manually, including apps that are not currently open. An ignored process name applies to all its instances.
 
-Settings are stored in `%LOCALAPPDATA%\MonitorHop\settings.json`. Version 1.4.2 and later move an existing settings file from the previous folder on first launch. Some elevated apps or apps that manage their own windows may resist movement. Moving a snapped window can remove its Snap placement.
+Settings are stored in `%LOCALAPPDATA%\MonitorHop\settings.json`; unexpected errors are written to `error.log` in the same folder. Version 1.4.2 and later move an existing settings file from the previous folder on first launch. Some elevated apps or apps that manage their own windows may resist movement. Moving a snapped window can remove its Snap placement.
 
 ## Build from source
 
 Install the .NET 10 SDK and Inno Setup 6, then run:
 
 ```powershell
-dotnet publish MonitorHop/MonitorHop.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=false -p:PublishTrimmed=false -p:DebugType=None -p:DebugSymbols=false -o install-payload
-& "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" installer/MonitorHop.iss
-dotnet publish MonitorHop/MonitorHop.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:PublishTrimmed=false -p:DebugType=None -p:DebugSymbols=false -o release
+$version = (dotnet msbuild MonitorHop/MonitorHop.csproj -getProperty:Version).Trim()
+dotnet publish MonitorHop/MonitorHop.csproj -c Release -r win-x64 --self-contained true -p:Version=$version -p:PublishSingleFile=false -p:PublishTrimmed=false -p:DebugType=None -p:DebugSymbols=false -o install-payload
+& "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" "/DAppVer=$version" installer/MonitorHop.iss
+dotnet publish MonitorHop/MonitorHop.csproj -c Release -r win-x64 --self-contained true -p:Version=$version -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:PublishTrimmed=false -p:DebugType=None -p:DebugSymbols=false -o release
 ```
 
-The installed build keeps the .NET files under the app directory, while the portable build is one executable.
+The installed build keeps the .NET files under the app directory, while the portable build is one executable. A tagged GitHub Actions build takes its version from the tag and passes the same value to both the app and installer.

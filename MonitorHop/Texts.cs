@@ -19,6 +19,7 @@ internal static class Texts
         ["StartupSetting"] = ("Запускать вместе с Windows", "Start with Windows", "Käivita koos Windowsiga"),
         ["FullscreenSetting"] = ("Автоматически игнорировать полноэкранные приложения", "Automatically ignore full-screen apps", "Eira täisekraanirakendusi automaatselt"),
         ["MonitorMapSetting"] = ("Показывать карту мониторов вместо стрелок", "Show monitor map instead of arrows", "Kuva noolte asemel kuvarite kaart"),
+        ["UpdateCheckSetting"] = ("Проверять обновления при запуске", "Check for updates at startup", "Otsi käivitamisel uuendusi"),
         ["IconOpacitySetting"] = ("Прозрачность значка", "Icon opacity", "Ikooni läbipaistmatus"),
         ["IconSizeSetting"] = ("Размер значка", "Icon size", "Ikooni suurus"),
         ["UpdateTitle"] = ("Доступно обновление MonitorHop", "MonitorHop update available", "MonitorHopi uuendus on saadaval"),

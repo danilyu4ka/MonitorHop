@@ -101,6 +101,7 @@ try {
         if (-not $ignoredNames.Contains('example-app') -or $unexpectedRow.Count -ne 0) {
             throw 'Advanced name or visible-process filtering did not work.'
         }
+        $settingsFormType.GetField('_checkUpdates', $flags).GetValue($settingsForm).Checked = $false
         $settingsFormType.GetField('_save', $flags).GetValue($settingsForm).PerformClick()
         $result = $settingsFormType.GetProperty('Result').GetValue($settingsForm)
         if ($result.OverlayOffsetX -ne 73 -or $result.OverlayOffsetY -ne -25) {
@@ -109,6 +110,7 @@ try {
         if ($result.IconOpacityPercent -ne 65 -or $result.IconSizePercent -ne 130) {
             throw 'Saving settings lost icon appearance values.'
         }
+        if ($result.CheckForUpdates) { throw 'Saving settings ignored the update-check preference.' }
     } finally { $settingsBitmap.Dispose() }
 } finally { $settingsForm.Dispose() }
 

@@ -10,6 +10,7 @@ internal sealed class AppSettings
     public bool Enabled { get; set; } = true;
     public bool IgnoreFullscreen { get; set; } = true;
     public bool ShowMonitorMap { get; set; }
+    public bool CheckForUpdates { get; set; } = true;
     public bool StartWithWindows { get; set; }
     public int OverlayOffsetX { get; set; }
     public int OverlayOffsetY { get; set; }
