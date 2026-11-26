@@ -2,11 +2,23 @@
 
 A small Windows 10/11 utility for moving the active window between monitors. [Download the installer](https://github.com/danilyu4ka/MonitorHop/releases/latest/download/MonitorHop-Setup.exe) or follow the [illustrated installation guide](docs/INSTALL_GUIDE_EN.md).
 
+![Animated illustration: hover over the MonitorHop icon, select monitor 2 in the map, and move a window upward and right while keeping its relative position](docs/images/monitor-hop-demo.gif)
+
+*Illustrated example: monitor 2 sits above and to the right of monitor 1; monitor 3 sits farther right and lower.*
+
 Created by [danilyu4ka](https://github.com/danilyu4ka). Licensed under [MIT](LICENSE). See the [corporate deployment notes](docs/CORPORATE_DEPLOYMENT_EN.md) for the install footprint and security details.
 
 ## How it works
 
 When at least two monitors are active, a small translucent button appears beside the upper-right controls of the active window. Hover over it to open the move menu. Choose a direction or switch to a map that shows the actual monitor arrangement. MonitorHop places the window at approximately the same relative position on the destination monitor. Maximized windows remain maximized.
+
+| Direction buttons | Monitor map |
+| :---: | :---: |
+| ![Actual overlay with four direction buttons](docs/images/overlay-arrows.png) | ![Actual overlay with a monitor map](docs/images/overlay-map.png) |
+
+For an uneven arrangement, enable **Show monitor map instead of arrows** in Settings. The map follows the monitors' positions in Windows Display settings, so you can choose a screen above, below, or diagonally across from the current one.
+
+![Illustrated three-monitor layout with monitor 2 above monitor 1 and the map selecting monitor 2](docs/images/monitor-map-example.png)
 
 With one monitor, MonitorHop stays in the tray and hides the overlay until another display is connected. If the button covers a window control, drag it to a nearby position. You can also drag the open menu by its upper-right logo. The offset is saved and applied to other windows.
 
