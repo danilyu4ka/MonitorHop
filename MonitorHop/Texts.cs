@@ -31,6 +31,7 @@ internal static class Texts
         ["Save"] = ("Сохранить", "Save", "Salvesta"),
         ["Cancel"] = ("Отмена", "Cancel", "Loobu"),
         ["MoveWindow"] = ("Перенести окно", "Move window", "Teisalda aken"),
+        ["DragHint"] = ("Перетащите значок, чтобы сдвинуть", "Drag the logo to reposition", "Asukoha muutmiseks lohista ikooni"),
         ["Left"] = ("Влево", "Left", "Vasakule"),
         ["Right"] = ("Вправо", "Right", "Paremale"),
         ["Up"] = ("Вверх", "Up", "Üles"),

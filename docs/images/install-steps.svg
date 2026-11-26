@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="980" height="190" viewBox="0 0 980 190" role="img" aria-label="MonitorHop setup: language, license, options, finish">
+  <rect width="980" height="190" rx="12" fill="#f4f6fa"/>
+  <g font-family="Segoe UI,Arial,sans-serif" text-anchor="middle">
+    <g fill="#fff" stroke="#aab6c7" stroke-width="1.5">
+      <rect x="25" y="30" width="202" height="125" rx="7"/><rect x="267" y="30" width="202" height="125" rx="7"/>
+      <rect x="509" y="30" width="202" height="125" rx="7"/><rect x="751" y="30" width="202" height="125" rx="7"/>
+    </g>
+    <g fill="#244477"><rect x="25" y="30" width="202" height="22" rx="7"/><rect x="267" y="30" width="202" height="22" rx="7"/>
+      <rect x="509" y="30" width="202" height="22" rx="7"/><rect x="751" y="30" width="202" height="22" rx="7"/></g>
+    <g fill="#132b4c" font-size="17" font-weight="600"><text x="126" y="93">1. Language</text><text x="368" y="93">2. License</text>
+      <text x="610" y="93">3. Options</text><text x="852" y="93">4. Finish</text></g>
+    <g fill="#536678" font-size="12"><text x="126" y="116">English · Русский · Eesti</text><text x="368" y="116">MIT License</text>
+      <text x="610" y="116">Startup is optional</text><text x="852" y="116">Launch MonitorHop</text></g>
+    <g fill="#479fca" font-size="26"><text x="247" y="102">›</text><text x="489" y="102">›</text><text x="731" y="102">›</text></g>
+  </g>
+</svg>

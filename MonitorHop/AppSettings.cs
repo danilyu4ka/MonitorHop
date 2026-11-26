@@ -8,6 +8,8 @@ internal sealed class AppSettings
     public bool IgnoreFullscreen { get; set; } = true;
     public bool ShowMonitorMap { get; set; }
     public bool StartWithWindows { get; set; }
+    public int OverlayOffsetX { get; set; }
+    public int OverlayOffsetY { get; set; }
     public string Language { get; set; } = Texts.SystemLanguage;
     public string HotkeyModifiers { get; set; } = "Ctrl+Shift+Alt";
     public List<string> IgnoredProcesses { get; set; } = [];
@@ -24,6 +26,8 @@ internal sealed class AppSettings
             settings.IgnoredProcesses ??= [];
             settings.Language = Texts.NormalizeLanguage(settings.Language);
             settings.StartWithWindows = StartupManager.IsEnabled();
+            settings.OverlayOffsetX = Math.Clamp(settings.OverlayOffsetX, -300, 300);
+            settings.OverlayOffsetY = Math.Clamp(settings.OverlayOffsetY, -150, 150);
             return settings;
         }
         catch (IOException) { return new(); }

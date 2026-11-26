@@ -2,4 +2,5 @@
 **/obj/
 .vs/
 release/
+install-payload/
 artifacts/

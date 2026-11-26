@@ -6,27 +6,23 @@ MonitorHop is a Windows 10/11 utility for moving the active window between monit
 
 Download [**MonitorHop-Setup.exe**](https://github.com/danilyu4ka/MonitorHop/releases/latest/download/MonitorHop-Setup.exe) and double-click it. The installer is a single executable and installs for your Windows account without administrator rights.
 
-![The first setup page offers English, Russian and Estonian](images/setup-language.png)
+![Illustration of the four setup stages](images/install-steps.svg)
 
-The first page selects both the setup language and the app language. If your Windows language is Russian or Estonian, that language is preselected. English is used for other system languages. Choose a language and click **Next**.
+The **Select Setup Language** dialog appears before the wizard. Choose English, Russian, or Estonian and click **OK**. If your Windows language is Russian or Estonian, it is preselected; English is used for other system languages. On a fresh installation, this choice also sets the app language.
 
 ## 2. Continue through the wizard
 
-![Welcome page of the classic setup wizard](images/setup-welcome.png)
+Read and accept the MIT License, then continue through the classic wizard. On **Additional Tasks**, optionally select **Start MonitorHop with Windows**. This option is off by default. The program installs under `%LOCALAPPDATA%\Programs\MonitorHop` and creates desktop and Start menu shortcuts.
 
-On the welcome page, click **Next**. On the next page, review the install location and optionally select **Start MonitorHop with Windows**. The program installs under `%LOCALAPPDATA%\Programs\MonitorHop` and creates desktop and Start menu shortcuts.
-
-![Installation options and the startup checkbox](images/setup-options.png)
-
-Click **Install**. When setup completes, leave **Launch MonitorHop now** selected and click **Finish**.
-
-![Completed installation with launch option](images/setup-finish.png)
+Click **Install**. When setup completes, leave **Launch MonitorHop** selected and click **Finish**. To update an existing installation, exit MonitorHop from its tray menu before running setup. Your existing preferences are preserved.
 
 MonitorHop runs in the Windows notification area. Double-click its tray icon to open Settings; right-click it to disable the overlay or exit the app. If only one monitor is active, MonitorHop keeps running in the tray and hides its overlay until a second monitor is connected.
 
 ## 3. Move a window
 
 Activate a normal window and hover over the translucent MonitorHop button near its upper-right corner. Choose a direction to move the window to the neighboring monitor. The new window position is approximately the same relative position on the destination screen. The default keyboard shortcut is **Ctrl+Shift+Alt + arrow key**.
+
+If the button covers something you need, drag the small button to a nearby position. Once the menu is open, you can also drag its logo in the upper-right corner. MonitorHop remembers this offset for other windows.
 
 ![The overlay menu with directional controls](images/overlay-arrows.png)
 
@@ -48,11 +44,11 @@ Open **Windows Settings → Apps → Installed apps**, find **MonitorHop**, and 
 
 ## Build from source
 
-The project targets Windows x64 and .NET 10. To create the standalone executable and setup launcher:
+The project targets Windows x64 and .NET 10. To create the installer, install Inno Setup 6 and run:
 
 ```powershell
-dotnet publish MonitorHop/MonitorHop.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:PublishTrimmed=false -p:DebugType=None -p:DebugSymbols=false -o release
-Copy-Item release/MonitorHop.exe release/MonitorHop-Setup.exe
+dotnet publish MonitorHop/MonitorHop.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=false -p:PublishTrimmed=false -p:DebugType=None -p:DebugSymbols=false -o install-payload
+& "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" installer/MonitorHop.iss
 ```
 
-The `-Setup.exe` filename opens the wizard. `MonitorHop.exe` can also run as a portable app, or open the same wizard with `--install`.
+For the portable single EXE, use the `dotnet publish` command in the [main README](../README.md). See the [corporate deployment notes](CORPORATE_DEPLOYMENT_EN.md) for the install footprint and security-relevant behavior. The source is available under the [MIT License](../LICENSE) from [danilyu4ka](https://github.com/danilyu4ka).

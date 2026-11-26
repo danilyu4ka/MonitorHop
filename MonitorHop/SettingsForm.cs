@@ -126,6 +126,8 @@ internal sealed class SettingsForm : Form
                 StartWithWindows = _startup.Checked,
                 IgnoreFullscreen = _fullscreen.Checked,
                 ShowMonitorMap = _monitorMap.Checked,
+                OverlayOffsetX = Result.OverlayOffsetX,
+                OverlayOffsetY = Result.OverlayOffsetY,
                 Language = ((LanguageOption)_language.SelectedItem!).Code,
                 HotkeyModifiers = (string)_modifiers.SelectedItem!,
                 IgnoredProcesses = _ignoredNames.OrderBy(name => name, StringComparer.OrdinalIgnoreCase)

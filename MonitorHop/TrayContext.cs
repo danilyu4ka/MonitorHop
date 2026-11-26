@@ -8,13 +8,14 @@ internal sealed class TrayContext : ApplicationContext
     private readonly OverlayForm _overlay;
     private readonly System.Windows.Forms.Timer _timer;
     private readonly HotkeyWindow _hotkeyWindow;
-    private readonly Native.WinEventProc _eventCallback;
     private readonly EventWaitHandle _exitRequest;
     private readonly ToolStripMenuItem _enabledItem;
     private readonly ToolStripMenuItem _settingsItem;
     private readonly ToolStripMenuItem _exitItem;
-    private IntPtr _foregroundHook;
     private IntPtr _target;
+    private IntPtr _cachedProcessWindow;
+    private uint _cachedProcessId;
+    private string _cachedProcessName = "";
     private AppSettings _settings;
 
     public TrayContext()
@@ -27,6 +28,12 @@ internal sealed class TrayContext : ApplicationContext
         _overlay.MonitorChosen += MoveToMonitor;
         _overlay.IgnoreRequested += IgnoreCurrent;
         _overlay.SettingsRequested += OpenSettings;
+        _overlay.PositionOffsetChanged += offset =>
+        {
+            _settings.OverlayOffsetX = offset.X;
+            _settings.OverlayOffsetY = offset.Y;
+            PersistSettings();
+        };
         _hotkeyWindow = new HotkeyWindow(Move);
 
         var menu = new ContextMenuStrip();
@@ -57,12 +64,7 @@ internal sealed class TrayContext : ApplicationContext
         };
         _tray.DoubleClick += (_, _) => OpenSettings();
 
-        _eventCallback = OnForegroundEvent;
-        _foregroundHook = Native.SetWinEventHook(Native.EventSystemForeground,
-            Native.EventSystemForeground, IntPtr.Zero, _eventCallback, 0, 0,
-            Native.WineventOutOfContext | Native.WineventSkipOwnProcess);
-
-        _timer = new System.Windows.Forms.Timer { Interval = 350 };
+        _timer = new System.Windows.Forms.Timer { Interval = 500 };
         _timer.Tick += (_, _) =>
         {
             if (_exitRequest.WaitOne(0)) ExitThread();
@@ -70,13 +72,6 @@ internal sealed class TrayContext : ApplicationContext
         };
         _timer.Start();
         ApplySettings();
-    }
-
-    private void OnForegroundEvent(IntPtr hook, uint eventType, IntPtr hwnd,
-        int idObject, int idChild, uint thread, uint time)
-    {
-        if (idObject == Native.ObjidWindow && idChild == 0)
-            RefreshOverlay();
     }
 
     private void RefreshOverlay()
@@ -131,10 +126,15 @@ internal sealed class TrayContext : ApplicationContext
 
         Native.GetWindowThreadProcessId(hwnd, out uint processId);
         if (processId == 0 || processId == Environment.ProcessId) return false;
+        if (_cachedProcessWindow == hwnd && _cachedProcessId == processId)
+            return !_settings.IsIgnored(_cachedProcessName);
         try
         {
             using var process = Process.GetProcessById((int)processId);
-            return !_settings.IsIgnored(process.ProcessName);
+            _cachedProcessWindow = hwnd;
+            _cachedProcessId = processId;
+            _cachedProcessName = process.ProcessName;
+            return !_settings.IsIgnored(_cachedProcessName);
         }
         catch (ArgumentException) { return false; }
         catch (System.ComponentModel.Win32Exception) { return false; }
@@ -226,6 +226,7 @@ internal sealed class TrayContext : ApplicationContext
         _exitItem.Text = T("Exit");
         _overlay.SetLanguage(_settings.Language);
         _overlay.SetDisplayMode(_settings.ShowMonitorMap);
+        _overlay.SetPositionOffset(_settings.OverlayOffsetX, _settings.OverlayOffsetY);
         _hotkeyWindow.Configure(_settings.Enabled ? _settings.HotkeyModifiers : null);
         if (_settings.Enabled && !_hotkeyWindow.Registered)
             _tray.ShowBalloonTip(3000, T("HotkeyFailedTitle"), T("HotkeyFailedBody"),
@@ -237,7 +238,6 @@ internal sealed class TrayContext : ApplicationContext
     {
         _timer.Stop();
         _timer.Dispose();
-        if (_foregroundHook != IntPtr.Zero) Native.UnhookWinEvent(_foregroundHook);
         _hotkeyWindow.Dispose();
         _exitRequest.Dispose();
         _overlay.Dispose();

@@ -11,7 +11,16 @@ internal sealed class OverlayForm : Form
     private const int ClosedHeight = 48;
     private const int MenuWidth = 300;
     private const int MenuHeight = 277;
+    private const int MaxOffsetX = 300;
+    private const int MaxOffsetY = 150;
+    private readonly System.Windows.Forms.Timer _hoverTimer = new() { Interval = 350 };
     private bool _expanded;
+    private bool _pointerDown;
+    private bool _dragging;
+    private bool _suppressClick;
+    private Point _dragStartCursor;
+    private Point _dragStartOffset;
+    private Point _offset;
     private int _hovered = -1;
     private Rectangle _anchor;
     private IntPtr _window;
@@ -24,6 +33,7 @@ internal sealed class OverlayForm : Form
     public event Action<Screen>? MonitorChosen;
     public event Action? IgnoreRequested;
     public event Action? SettingsRequested;
+    public event Action<Point>? PositionOffsetChanged;
 
     public OverlayForm()
     {
@@ -35,6 +45,18 @@ internal sealed class OverlayForm : Form
         ClientSize = new Size(ClosedWidth, ClosedHeight);
         DoubleBuffered = true;
         Cursor = Cursors.Hand;
+        _hoverTimer.Tick += (_, _) =>
+        {
+            _hoverTimer.Stop();
+            if (!_pointerDown && !_dragging && ClientRectangle.Contains(PointToClient(Cursor.Position)))
+                Expand();
+        };
+    }
+
+    protected override void Dispose(bool disposing)
+    {
+        if (disposing) _hoverTimer.Dispose();
+        base.Dispose(disposing);
     }
 
     protected override bool ShowWithoutActivation => true;
@@ -61,6 +83,15 @@ internal sealed class OverlayForm : Form
         Invalidate();
     }
 
+    public void SetPositionOffset(int x, int y)
+    {
+        var next = new Point(Math.Clamp(x, -MaxOffsetX, MaxOffsetX),
+            Math.Clamp(y, -MaxOffsetY, MaxOffsetY));
+        if (_offset == next) return;
+        _offset = next;
+        Position();
+    }
+
     public void Attach(Rectangle window, Screen source, IntPtr hwnd)
     {
         string layout = string.Join("|", Screen.AllScreens.Select(screen =>
@@ -78,11 +109,18 @@ internal sealed class OverlayForm : Form
 
     public void Detach()
     {
+        _hoverTimer.Stop();
+        _pointerDown = false;
+        _dragging = false;
+        Capture = false;
         if (Visible) Hide();
         _expanded = false;
         _hovered = -1;
         Opacity = 0.78;
         ClientSize = new Size(ClosedWidth, ClosedHeight);
+        _anchor = Rectangle.Empty;
+        _window = IntPtr.Zero;
+        _source = null;
     }
 
     protected override void OnSizeChanged(EventArgs e)
@@ -98,24 +136,64 @@ internal sealed class OverlayForm : Form
     protected override void OnMouseEnter(EventArgs e)
     {
         base.OnMouseEnter(e);
-        Expand();
+        if (!_expanded && !_pointerDown) _hoverTimer.Start();
     }
 
     protected override void OnMouseLeave(EventArgs e)
     {
         base.OnMouseLeave(e);
+        _hoverTimer.Stop();
+        if (_pointerDown || _dragging) return;
         if (ClientRectangle.Contains(PointToClient(Cursor.Position))) return;
-        _expanded = false;
-        _hovered = -1;
-        Opacity = 0.78;
-        ClientSize = new Size(ClosedWidth, ClosedHeight);
-        Position();
-        Invalidate();
+        Collapse();
+    }
+
+    protected override void OnMouseDown(MouseEventArgs e)
+    {
+        base.OnMouseDown(e);
+        if (e.Button != MouseButtons.Left || (_expanded && !DragHandle().Contains(e.Location))) return;
+        _hoverTimer.Stop();
+        _pointerDown = true;
+        _dragging = false;
+        _dragStartCursor = Cursor.Position;
+        _dragStartOffset = _offset;
+        Capture = true;
+    }
+
+    protected override void OnMouseUp(MouseEventArgs e)
+    {
+        base.OnMouseUp(e);
+        if (e.Button != MouseButtons.Left || !_pointerDown) return;
+        _pointerDown = false;
+        Capture = false;
+        if (!_dragging) return;
+        _dragging = false;
+        _suppressClick = true;
+        if (_offset != _dragStartOffset) PositionOffsetChanged?.Invoke(_offset);
+        if (_expanded && !ClientRectangle.Contains(PointToClient(Cursor.Position))) Collapse();
+        if (IsHandleCreated) BeginInvoke(() => _suppressClick = false);
     }
 
     protected override void OnMouseMove(MouseEventArgs e)
     {
         base.OnMouseMove(e);
+        if (_pointerDown)
+        {
+            Point delta = new(Cursor.Position.X - _dragStartCursor.X,
+                Cursor.Position.Y - _dragStartCursor.Y);
+            if (!_dragging && (Math.Abs(delta.X) > 4 || Math.Abs(delta.Y) > 4))
+            {
+                _dragging = true;
+                _hoverTimer.Stop();
+            }
+            if (_dragging)
+            {
+                double scale = _window == IntPtr.Zero ? 1 : Math.Max(1, Native.GetDpiForWindow(_window)) / 96.0;
+                SetPositionOffset(_dragStartOffset.X + (int)Math.Round(delta.X / scale),
+                    _dragStartOffset.Y + (int)Math.Round(delta.Y / scale));
+            }
+            return;
+        }
         int hovered = HitTest(e.Location);
         if (hovered == _hovered) return;
         _hovered = hovered;
@@ -125,6 +203,7 @@ internal sealed class OverlayForm : Form
     protected override void OnMouseClick(MouseEventArgs e)
     {
         base.OnMouseClick(e);
+        if (_suppressClick) { _suppressClick = false; return; }
         if (e.Button != MouseButtons.Left) return;
         if (!_expanded) { Expand(); return; }
         int hit = HitTest(e.Location);
@@ -165,6 +244,10 @@ internal sealed class OverlayForm : Form
         TextRenderer.DrawText(graphics, Texts.Get(_language,
                 _showMonitorMap ? "MonitorMapTitle" : "MoveWindow"), headingFont,
             new Rectangle(14, 15, 226, 27), Color.White,
+            TextFormatFlags.Left | TextFormatFlags.VerticalCenter | TextFormatFlags.NoPadding);
+        using var hintFont = new Font("Segoe UI", 8);
+        TextRenderer.DrawText(graphics, Texts.Get(_language, "DragHint"), hintFont,
+            new Rectangle(14, 39, 225, 16), Color.FromArgb(171, 206, 223),
             TextFormatFlags.Left | TextFormatFlags.VerticalCenter | TextFormatFlags.NoPadding);
         graphics.DrawImage(Branding.Image, new Rectangle(247, 3, 43, 43));
 
@@ -222,6 +305,7 @@ internal sealed class OverlayForm : Form
 
     private static Rectangle IgnoreRect() => new(12, 193, 276, 36);
     private static Rectangle SettingsRect() => new(12, 238, 276, 29);
+    private static Rectangle DragHandle() => new(240, 0, 60, 54);
 
     private void PaintMonitorMap(Graphics graphics, Font font)
     {
@@ -288,9 +372,21 @@ internal sealed class OverlayForm : Form
     private void Expand()
     {
         if (_expanded) return;
+        _hoverTimer.Stop();
         _expanded = true;
         Opacity = 0.96;
         ClientSize = new Size(MenuWidth, MenuHeight);
+        Position();
+        Invalidate();
+    }
+
+    private void Collapse()
+    {
+        if (!_expanded) return;
+        _expanded = false;
+        _hovered = -1;
+        Opacity = 0.78;
+        ClientSize = new Size(ClosedWidth, ClosedHeight);
         Position();
         Invalidate();
     }
@@ -303,9 +399,10 @@ internal sealed class OverlayForm : Form
         double scale = dpi > 0 ? dpi / 96.0 : 1;
         int captionSpace = (int)Math.Round(3 * 46 * scale + 12 * scale);
         int collapsedRight = Math.Max(_anchor.Left + ClosedWidth + 8, _anchor.Right - captionSpace);
-        int x = collapsedRight - Width;
+        int x = collapsedRight - Width + (int)Math.Round(_offset.X * scale);
         x = Math.Clamp(x, work.Left, Math.Max(work.Left, work.Right - Width));
-        int y = Math.Clamp(_anchor.Top + 3, work.Top, Math.Max(work.Top, work.Bottom - Height));
+        int y = Math.Clamp(_anchor.Top + 3 + (int)Math.Round(_offset.Y * scale),
+            work.Top, Math.Max(work.Top, work.Bottom - Height));
         Location = new Point(x, y);
     }
 

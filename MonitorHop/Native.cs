@@ -5,11 +5,6 @@ namespace MonitorHop;
 
 internal static class Native
 {
-    internal const uint EventSystemForeground = 0x0003;
-    internal const uint EventObjectLocationChange = 0x800B;
-    internal const uint WineventOutOfContext = 0x0000;
-    internal const uint WineventSkipOwnProcess = 0x0002;
-    internal const int ObjidWindow = 0;
     internal const int GaRoot = 2;
     internal const int SwRestore = 9;
     internal const int SwMaximize = 3;
@@ -46,22 +41,11 @@ internal static class Native
         public Rect RcNormalPosition;
     }
 
-    internal delegate void WinEventProc(IntPtr hook, uint eventType, IntPtr hwnd,
-        int idObject, int idChild, uint eventThread, uint eventTime);
-
     internal delegate bool EnumWindowsProc(IntPtr hwnd, IntPtr parameter);
 
     [DllImport("user32.dll")]
     [return: MarshalAs(UnmanagedType.Bool)]
     internal static extern bool EnumWindows(EnumWindowsProc callback, IntPtr parameter);
-
-    [DllImport("user32.dll")]
-    internal static extern IntPtr SetWinEventHook(uint eventMin, uint eventMax, IntPtr module,
-        WinEventProc callback, uint processId, uint threadId, uint flags);
-
-    [DllImport("user32.dll")]
-    [return: MarshalAs(UnmanagedType.Bool)]
-    internal static extern bool UnhookWinEvent(IntPtr hook);
 
     [DllImport("user32.dll")]
     internal static extern IntPtr GetForegroundWindow();

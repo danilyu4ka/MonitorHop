@@ -7,6 +7,8 @@ $flags = [System.Reflection.BindingFlags]'Instance,NonPublic'
 
 $settingsType = $assembly.GetType('MonitorHop.AppSettings', $true)
 $settings = [System.Activator]::CreateInstance($settingsType)
+$settings.OverlayOffsetX = 73
+$settings.OverlayOffsetY = -25
 $settingsFormType = $assembly.GetType('MonitorHop.SettingsForm', $true)
 $settingsForm = [System.Activator]::CreateInstance($settingsFormType, @($settings))
 
@@ -40,6 +42,11 @@ try {
         $unexpectedRow = @($items | Where-Object { $_.Text -eq 'example-app.exe' })
         if (-not $ignoredNames.Contains('example-app') -or $unexpectedRow.Count -ne 0) {
             throw 'Advanced name or visible-process filtering did not work.'
+        }
+        $settingsFormType.GetField('_save', $flags).GetValue($settingsForm).PerformClick()
+        $result = $settingsFormType.GetProperty('Result').GetValue($settingsForm)
+        if ($result.OverlayOffsetX -ne 73 -or $result.OverlayOffsetY -ne -25) {
+            throw 'Saving settings lost the dragged overlay position.'
         }
     } finally { $settingsBitmap.Dispose() }
 } finally { $settingsForm.Dispose() }
