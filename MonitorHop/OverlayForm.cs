@@ -1,0 +1,323 @@
+using System.Drawing.Drawing2D;
+
+namespace MonitorHop;
+
+internal sealed class OverlayForm : Form
+{
+    private static readonly Direction[] Directions =
+        [Direction.Left, Direction.Right, Direction.Up, Direction.Down];
+    private static readonly string[] Glyphs = ["←", "→", "↑", "↓"];
+    private const int ClosedWidth = 58;
+    private const int ClosedHeight = 48;
+    private const int MenuWidth = 300;
+    private const int MenuHeight = 277;
+    private bool _expanded;
+    private int _hovered = -1;
+    private Rectangle _anchor;
+    private IntPtr _window;
+    private Screen? _source;
+    private string _language = "ru";
+    private bool _showMonitorMap;
+    private string _monitorLayout = "";
+
+    public event Action<Direction>? DirectionChosen;
+    public event Action<Screen>? MonitorChosen;
+    public event Action? IgnoreRequested;
+    public event Action? SettingsRequested;
+
+    public OverlayForm()
+    {
+        FormBorderStyle = FormBorderStyle.None;
+        ShowInTaskbar = false;
+        TopMost = true;
+        Opacity = 0.78;
+        BackColor = Color.FromArgb(20, 35, 54);
+        ClientSize = new Size(ClosedWidth, ClosedHeight);
+        DoubleBuffered = true;
+        Cursor = Cursors.Hand;
+    }
+
+    protected override bool ShowWithoutActivation => true;
+
+    protected override CreateParams CreateParams
+    {
+        get
+        {
+            var parameters = base.CreateParams;
+            parameters.ExStyle |= 0x08000000 | 0x00000080; // WS_EX_NOACTIVATE | WS_EX_TOOLWINDOW
+            return parameters;
+        }
+    }
+
+    public void SetLanguage(string language)
+    {
+        _language = Texts.NormalizeLanguage(language);
+        Invalidate();
+    }
+
+    public void SetDisplayMode(bool showMonitorMap)
+    {
+        _showMonitorMap = showMonitorMap;
+        Invalidate();
+    }
+
+    public void Attach(Rectangle window, Screen source, IntPtr hwnd)
+    {
+        string layout = string.Join("|", Screen.AllScreens.Select(screen =>
+            $"{screen.DeviceName}:{screen.Bounds.Left},{screen.Bounds.Top},{screen.Bounds.Width},{screen.Bounds.Height}"));
+        bool changed = _anchor != window || _window != hwnd ||
+            _source?.DeviceName != source.DeviceName || _monitorLayout != layout;
+        _anchor = window;
+        _window = hwnd;
+        _source = source;
+        _monitorLayout = layout;
+        if (changed) Position();
+        if (changed) Invalidate();
+        if (!Visible) Show();
+    }
+
+    public void Detach()
+    {
+        if (Visible) Hide();
+        _expanded = false;
+        _hovered = -1;
+        Opacity = 0.78;
+        ClientSize = new Size(ClosedWidth, ClosedHeight);
+    }
+
+    protected override void OnSizeChanged(EventArgs e)
+    {
+        base.OnSizeChanged(e);
+        if (Width < 20 || Height < 20) return;
+        using var path = RoundedPath(new Rectangle(0, 0, Width, Height));
+        var previous = Region;
+        Region = new Region(path);
+        previous?.Dispose();
+    }
+
+    protected override void OnMouseEnter(EventArgs e)
+    {
+        base.OnMouseEnter(e);
+        Expand();
+    }
+
+    protected override void OnMouseLeave(EventArgs e)
+    {
+        base.OnMouseLeave(e);
+        if (ClientRectangle.Contains(PointToClient(Cursor.Position))) return;
+        _expanded = false;
+        _hovered = -1;
+        Opacity = 0.78;
+        ClientSize = new Size(ClosedWidth, ClosedHeight);
+        Position();
+        Invalidate();
+    }
+
+    protected override void OnMouseMove(MouseEventArgs e)
+    {
+        base.OnMouseMove(e);
+        int hovered = HitTest(e.Location);
+        if (hovered == _hovered) return;
+        _hovered = hovered;
+        Invalidate();
+    }
+
+    protected override void OnMouseClick(MouseEventArgs e)
+    {
+        base.OnMouseClick(e);
+        if (e.Button != MouseButtons.Left) return;
+        if (!_expanded) { Expand(); return; }
+        int hit = HitTest(e.Location);
+        if (hit == 4) { IgnoreRequested?.Invoke(); return; }
+        if (hit == 5) { SettingsRequested?.Invoke(); return; }
+        if (hit >= 100)
+        {
+            var screens = Screen.AllScreens;
+            int index = hit - 100;
+            if (index < screens.Length && screens[index].DeviceName != _source?.DeviceName)
+                MonitorChosen?.Invoke(screens[index]);
+            return;
+        }
+        if (hit is < 0 or > 3 || _source is null) return;
+        var direction = Directions[hit];
+        if (MonitorMover.FindNeighbor(_source, direction) is not null)
+            DirectionChosen?.Invoke(direction);
+    }
+
+    protected override void OnPaint(PaintEventArgs e)
+    {
+        base.OnPaint(e);
+        var graphics = e.Graphics;
+        graphics.SmoothingMode = SmoothingMode.AntiAlias;
+        using var border = new Pen(Color.FromArgb(81, 172, 203), 1.3f);
+        using var path = RoundedPath(new Rectangle(1, 1, Width - 3, Height - 3));
+        graphics.DrawPath(border, path);
+
+        if (!_expanded)
+        {
+            graphics.DrawImage(Branding.Image, new Rectangle(7, 3, 44, 42));
+            return;
+        }
+
+        using var headingFont = new Font("Segoe UI", 10, FontStyle.Bold);
+        using var labelFont = new Font("Segoe UI", 10);
+        using var arrowFont = new Font("Segoe UI Symbol", 19, FontStyle.Bold);
+        TextRenderer.DrawText(graphics, Texts.Get(_language,
+                _showMonitorMap ? "MonitorMapTitle" : "MoveWindow"), headingFont,
+            new Rectangle(14, 15, 226, 27), Color.White,
+            TextFormatFlags.Left | TextFormatFlags.VerticalCenter | TextFormatFlags.NoPadding);
+        graphics.DrawImage(Branding.Image, new Rectangle(247, 3, 43, 43));
+
+        if (_showMonitorMap)
+            PaintMonitorMap(graphics, headingFont);
+        else
+        {
+            for (int i = 0; i < 4; i++)
+            {
+                var rectangle = ButtonRect(i);
+                bool available = _source is not null && MonitorMover.FindNeighbor(_source, Directions[i]) is not null;
+                PaintButton(graphics, rectangle, available, _hovered == i);
+                Color ink = available ? Color.White : Color.FromArgb(118, 137, 153);
+                TextRenderer.DrawText(graphics, Glyphs[i], arrowFont,
+                    new Rectangle(rectangle.Left + 12, rectangle.Top + 9, 36, 36), ink,
+                    TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.NoPadding);
+                TextRenderer.DrawText(graphics, Texts.Get(_language, Directions[i].ToString()), labelFont,
+                    new Rectangle(rectangle.Left + 52, rectangle.Top + 13, 76, 31), ink,
+                    TextFormatFlags.Left | TextFormatFlags.VerticalCenter | TextFormatFlags.NoPadding);
+            }
+        }
+
+        var ignore = IgnoreRect();
+        PaintButton(graphics, ignore, true, _hovered == 4);
+        TextRenderer.DrawText(graphics, "⊘  " + Texts.Get(_language, "IgnoreApp"), labelFont,
+            ignore, Color.White,
+            TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.NoPadding);
+
+        var settings = SettingsRect();
+        PaintButton(graphics, settings, true, _hovered == 5);
+        TextRenderer.DrawText(graphics, "⚙  " + Texts.Get(_language, "Settings"), labelFont,
+            settings, Color.White,
+            TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.NoPadding);
+    }
+
+    private static void PaintButton(Graphics graphics, Rectangle rect, bool enabled, bool hovered)
+    {
+        using var fill = new SolidBrush(!enabled
+            ? Color.FromArgb(29, 43, 59)
+            : hovered ? Color.FromArgb(46, 101, 137) : Color.FromArgb(34, 62, 84));
+        using var line = new Pen(hovered && enabled
+            ? Color.FromArgb(117, 215, 244) : Color.FromArgb(72, 114, 140), 1);
+        using var path = RoundedPath(rect, 12);
+        graphics.FillPath(fill, path);
+        graphics.DrawPath(line, path);
+    }
+
+    private static Rectangle ButtonRect(int index) => index switch
+    {
+        0 => new Rectangle(12, 57, 132, 58),
+        1 => new Rectangle(156, 57, 132, 58),
+        2 => new Rectangle(12, 125, 132, 58),
+        _ => new Rectangle(156, 125, 132, 58)
+    };
+
+    private static Rectangle IgnoreRect() => new(12, 193, 276, 36);
+    private static Rectangle SettingsRect() => new(12, 238, 276, 29);
+
+    private void PaintMonitorMap(Graphics graphics, Font font)
+    {
+        var tiles = MonitorTiles();
+        for (int i = 0; i < tiles.Count; i++)
+        {
+            var (screen, rectangle) = tiles[i];
+            bool current = screen.DeviceName == _source?.DeviceName;
+            PaintButton(graphics, rectangle, !current, _hovered == 100 + i);
+            if (current)
+            {
+                using var outline = new Pen(Color.FromArgb(112, 221, 246), 2);
+                graphics.DrawRectangle(outline, rectangle);
+            }
+            TextRenderer.DrawText(graphics, (i + 1).ToString(), font, rectangle,
+                current ? Color.FromArgb(117, 224, 247) : Color.White,
+                TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.NoPadding);
+        }
+    }
+
+    private List<(Screen Screen, Rectangle Rect)> MonitorTiles()
+    {
+        var screens = Screen.AllScreens;
+        if (screens.Length == 0) return [];
+        Rectangle all = screens[0].Bounds;
+        foreach (var screen in screens.Skip(1)) all = Rectangle.Union(all, screen.Bounds);
+        var area = new Rectangle(12, 55, 276, 131);
+        double scale = Math.Min((double)area.Width / Math.Max(1, all.Width),
+            (double)area.Height / Math.Max(1, all.Height));
+        double originX = area.Left + (area.Width - all.Width * scale) / 2;
+        double originY = area.Top + (area.Height - all.Height * scale) / 2;
+        var tiles = new List<(Screen Screen, Rectangle Rect)>();
+        foreach (var screen in screens)
+        {
+            var bounds = screen.Bounds;
+            var rect = new Rectangle(
+                (int)Math.Round(originX + (bounds.Left - all.Left) * scale) + 3,
+                (int)Math.Round(originY + (bounds.Top - all.Top) * scale) + 3,
+                Math.Max(18, (int)Math.Round(bounds.Width * scale) - 6),
+                Math.Max(18, (int)Math.Round(bounds.Height * scale) - 6));
+            tiles.Add((screen, rect));
+        }
+        return tiles;
+    }
+
+    private int HitTest(Point point)
+    {
+        if (!_expanded) return -1;
+        if (_showMonitorMap)
+        {
+            var tiles = MonitorTiles();
+            for (int i = 0; i < tiles.Count; i++)
+                if (tiles[i].Rect.Contains(point)) return 100 + i;
+        }
+        else
+        {
+        for (int i = 0; i < 4; i++)
+            if (ButtonRect(i).Contains(point)) return i;
+        }
+        if (IgnoreRect().Contains(point)) return 4;
+        return SettingsRect().Contains(point) ? 5 : -1;
+    }
+
+    private void Expand()
+    {
+        if (_expanded) return;
+        _expanded = true;
+        Opacity = 0.96;
+        ClientSize = new Size(MenuWidth, MenuHeight);
+        Position();
+        Invalidate();
+    }
+
+    private void Position()
+    {
+        if (_anchor.IsEmpty || _window == IntPtr.Zero) return;
+        var work = Screen.FromHandle(_window).WorkingArea;
+        uint dpi = Native.GetDpiForWindow(_window);
+        double scale = dpi > 0 ? dpi / 96.0 : 1;
+        int captionSpace = (int)Math.Round(3 * 46 * scale + 12 * scale);
+        int collapsedRight = Math.Max(_anchor.Left + ClosedWidth + 8, _anchor.Right - captionSpace);
+        int x = collapsedRight - Width;
+        x = Math.Clamp(x, work.Left, Math.Max(work.Left, work.Right - Width));
+        int y = Math.Clamp(_anchor.Top + 3, work.Top, Math.Max(work.Top, work.Bottom - Height));
+        Location = new Point(x, y);
+    }
+
+    private static GraphicsPath RoundedPath(Rectangle rect, int radius = 14)
+    {
+        int diameter = radius * 2;
+        var path = new GraphicsPath();
+        path.AddArc(rect.Left, rect.Top, diameter, diameter, 180, 90);
+        path.AddArc(rect.Right - diameter, rect.Top, diameter, diameter, 270, 90);
+        path.AddArc(rect.Right - diameter, rect.Bottom - diameter, diameter, diameter, 0, 90);
+        path.AddArc(rect.Left, rect.Bottom - diameter, diameter, diameter, 90, 90);
+        path.CloseFigure();
+        return path;
+    }
+}
