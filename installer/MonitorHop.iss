@@ -32,7 +32,7 @@ SolidCompression=yes
 [Languages]
 Name: "en"; MessagesFile: "compiler:Default.isl"
 Name: "ru"; MessagesFile: "compiler:Languages\Russian.isl"
-Name: "et"; MessagesFile: "compiler:Languages\Unofficial\Estonian.isl"
+Name: "et"; MessagesFile: "compiler:Default.isl,installer\languages\Estonian.isl"
 
 [CustomMessages]
 en.StartWithWindows=Start MonitorHop with Windows
