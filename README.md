@@ -19,7 +19,9 @@ The installer works for the current user without administrator rights and instal
 
 ## Controls and settings
 
-The default shortcut is **Ctrl+Shift+Alt + arrow key**. Settings lets you change the modifiers, select the interface language, start with Windows, ignore full-screen apps, or show the monitor map instead of arrows. Full-screen apps are ignored by default.
+The default shortcut is **Ctrl+Shift+Alt + arrow key**. Settings lets you change the modifiers, select the interface language, start with Windows, ignore full-screen apps, show the monitor map instead of arrows, and adjust the collapsed button's opacity (30–100%) and size (60–160%). Full-screen apps are ignored by default.
+
+Once per launch, MonitorHop checks the latest published [GitHub release](https://github.com/danilyu4ka/MonitorHop/releases). If its version is newer, a prompt offers to open that release page in your browser. You decide whether to download and run the installer; the app does not download or execute updates itself. Exit MonitorHop from the tray before running an updated installer. The check requires the repository to be public and an internet connection; a failed check is silent.
 
 Use **Ignore this app** in the overlay to ignore the current application. Settings lists applications with visible windows on the connected displays; tick the ones to ignore. **Advanced** accepts process names manually, including apps that are not currently open. An ignored process name applies to all its instances.
 

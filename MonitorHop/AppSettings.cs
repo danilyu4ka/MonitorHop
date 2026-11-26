@@ -13,6 +13,8 @@ internal sealed class AppSettings
     public bool StartWithWindows { get; set; }
     public int OverlayOffsetX { get; set; }
     public int OverlayOffsetY { get; set; }
+    public int IconOpacityPercent { get; set; } = 78;
+    public int IconSizePercent { get; set; } = 100;
     public string Language { get; set; } = Texts.SystemLanguage;
     public string HotkeyModifiers { get; set; } = "Ctrl+Shift+Alt";
     public List<string> IgnoredProcesses { get; set; } = [];
@@ -87,6 +89,8 @@ internal sealed class AppSettings
         settings.StartWithWindows = StartupManager.IsEnabled();
         settings.OverlayOffsetX = Math.Clamp(settings.OverlayOffsetX, -300, 300);
         settings.OverlayOffsetY = Math.Clamp(settings.OverlayOffsetY, -150, 150);
+        settings.IconOpacityPercent = Math.Clamp(settings.IconOpacityPercent, 30, 100);
+        settings.IconSizePercent = Math.Clamp(settings.IconSizePercent, 60, 160);
         return settings;
     }
 

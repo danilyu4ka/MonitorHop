@@ -12,12 +12,17 @@ $invalid.IgnoredProcesses.Add($null)
 $invalid.IgnoredProcesses.Add(' ')
 $invalid.IgnoredProcesses.Add('C:\Apps\game.exe')
 $invalid.IgnoredProcesses.Add('game.exe')
+$invalid.IconOpacityPercent = -20
+$invalid.IconSizePercent = 999
 if (-not $invalid.IsIgnored('game')) { throw 'Ignoring a process must tolerate null entries.' }
 $staticFlags = [System.Reflection.BindingFlags]'Static,NonPublic'
 $normalize = $settingsType.GetMethod('NormalizeLoaded', $staticFlags)
 $normalize.Invoke($null, @($invalid)) | Out-Null
 if ($invalid.HotkeyModifiers -ne 'Ctrl+Shift+Alt' -or $invalid.IgnoredProcesses.Count -ne 1) {
     throw 'Invalid hotkeys or ignored process names were not normalized.'
+}
+if ($invalid.IconOpacityPercent -ne 30 -or $invalid.IconSizePercent -ne 160) {
+    throw 'Invalid icon appearance settings were not clamped.'
 }
 foreach ($badModifier in @('Win', $null)) {
     $invalid.HotkeyModifiers = $badModifier
@@ -27,6 +32,8 @@ foreach ($badModifier in @('Win', $null)) {
 $settings = [System.Activator]::CreateInstance($settingsType)
 $settings.OverlayOffsetX = 73
 $settings.OverlayOffsetY = -25
+$settings.IconOpacityPercent = 65
+$settings.IconSizePercent = 130
 $settingsFormType = $assembly.GetType('MonitorHop.SettingsForm', $true)
 $settingsForm = [System.Activator]::CreateInstance($settingsFormType, @($settings))
 
@@ -99,12 +106,20 @@ try {
         if ($result.OverlayOffsetX -ne 73 -or $result.OverlayOffsetY -ne -25) {
             throw 'Saving settings lost the dragged overlay position.'
         }
+        if ($result.IconOpacityPercent -ne 65 -or $result.IconSizePercent -ne 130) {
+            throw 'Saving settings lost icon appearance values.'
+        }
     } finally { $settingsBitmap.Dispose() }
 } finally { $settingsForm.Dispose() }
 
 $overlayType = $assembly.GetType('MonitorHop.OverlayForm', $true)
 $overlay = [System.Activator]::CreateInstance($overlayType)
 try {
+    $overlayType.GetMethod('SetAppearance').Invoke($overlay, @(65, 130)) | Out-Null
+    if ($overlay.ClientSize.Width -ne 75 -or $overlay.ClientSize.Height -ne 62 -or
+        [Math]::Abs($overlay.Opacity - 0.65) -gt 0.001) {
+        throw 'The collapsed overlay did not apply size and opacity.'
+    }
     $overlayType.GetMethod('SetLanguage').Invoke($overlay, @('en')) | Out-Null
     $overlayType.GetField('_expanded', $flags).SetValue($overlay, $true)
     $overlayType.GetField('_source', $flags).SetValue($overlay, [System.Windows.Forms.Screen]::PrimaryScreen)
@@ -131,7 +146,7 @@ try {
         }
     } finally { $overlayBitmap.Dispose() }
     $overlayType.GetField('_expanded', $flags).SetValue($overlay, $false)
-    $overlay.ClientSize = [System.Drawing.Size]::new(58, 48)
+    $overlay.ClientSize = [System.Drawing.Size]::new(75, 62)
     [System.Windows.Forms.Application]::DoEvents()
     $buttonBitmap = [System.Drawing.Bitmap]::new($overlay.Width, $overlay.Height)
     try {
@@ -139,5 +154,18 @@ try {
         $buttonBitmap.Save((Join-Path $output 'button-preview.png'), [System.Drawing.Imaging.ImageFormat]::Png)
     } finally { $buttonBitmap.Dispose() }
 } finally { $overlay.Dispose() }
+
+$updateType = $assembly.GetType('MonitorHop.UpdateChecker', $true)
+$parseTag = $updateType.GetMethod('TryParseTag', $staticFlags)
+foreach ($tag in @('v1.5.0', '1.5.0.0')) {
+    $arguments = [object[]]@($tag, $null)
+    if (-not $parseTag.Invoke($null, $arguments) -or $arguments[1].ToString() -ne '1.5.0.0') {
+        throw "Valid release tag was rejected: $tag"
+    }
+}
+foreach ($tag in @('v1.5.0-preview', 'v1.5.0/other', 'oops')) {
+    $arguments = [object[]]@($tag, $null)
+    if ($parseTag.Invoke($null, $arguments)) { throw "Unsafe release tag was accepted: $tag" }
+}
 
 Write-Output "Saved previews to $output"

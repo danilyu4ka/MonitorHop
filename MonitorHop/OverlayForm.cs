@@ -27,6 +27,8 @@ internal sealed class OverlayForm : Form
     private Screen? _source;
     private string _language = "ru";
     private bool _showMonitorMap;
+    private int _iconOpacityPercent = 78;
+    private int _iconSizePercent = 100;
     private string _monitorLayout = "";
 
     public event Action<Direction>? DirectionChosen;
@@ -92,6 +94,24 @@ internal sealed class OverlayForm : Form
         Position();
     }
 
+    public void SetAppearance(int opacityPercent, int sizePercent)
+    {
+        int opacity = Math.Clamp(opacityPercent, 30, 100);
+        int size = Math.Clamp(sizePercent, 60, 160);
+        if (_iconOpacityPercent == opacity && _iconSizePercent == size) return;
+        _iconOpacityPercent = opacity;
+        _iconSizePercent = size;
+        if (_expanded) return;
+        Opacity = _iconOpacityPercent / 100.0;
+        ClientSize = ClosedSize;
+        Position();
+        Invalidate();
+    }
+
+    private Size ClosedSize => new(
+        (int)Math.Round(ClosedWidth * _iconSizePercent / 100.0),
+        (int)Math.Round(ClosedHeight * _iconSizePercent / 100.0));
+
     public void Attach(Rectangle window, Screen source, IntPtr hwnd)
     {
         string layout = string.Join("|", Screen.AllScreens.Select(screen =>
@@ -116,8 +136,8 @@ internal sealed class OverlayForm : Form
         if (Visible) Hide();
         _expanded = false;
         _hovered = -1;
-        Opacity = 0.78;
-        ClientSize = new Size(ClosedWidth, ClosedHeight);
+        Opacity = _iconOpacityPercent / 100.0;
+        ClientSize = ClosedSize;
         _anchor = Rectangle.Empty;
         _window = IntPtr.Zero;
         _source = null;
@@ -234,7 +254,11 @@ internal sealed class OverlayForm : Form
 
         if (!_expanded)
         {
-            graphics.DrawImage(Branding.Image, new Rectangle(7, 3, 44, 42));
+            graphics.DrawImage(Branding.Image, new Rectangle(
+                (int)Math.Round(7 * _iconSizePercent / 100.0),
+                (int)Math.Round(3 * _iconSizePercent / 100.0),
+                (int)Math.Round(44 * _iconSizePercent / 100.0),
+                (int)Math.Round(42 * _iconSizePercent / 100.0)));
             return;
         }
 
@@ -385,8 +409,8 @@ internal sealed class OverlayForm : Form
         if (!_expanded) return;
         _expanded = false;
         _hovered = -1;
-        Opacity = 0.78;
-        ClientSize = new Size(ClosedWidth, ClosedHeight);
+        Opacity = _iconOpacityPercent / 100.0;
+        ClientSize = ClosedSize;
         Position();
         Invalidate();
     }
@@ -398,7 +422,7 @@ internal sealed class OverlayForm : Form
         uint dpi = Native.GetDpiForWindow(_window);
         double scale = dpi > 0 ? dpi / 96.0 : 1;
         int captionSpace = (int)Math.Round(3 * 46 * scale + 12 * scale);
-        int collapsedRight = Math.Max(_anchor.Left + ClosedWidth + 8, _anchor.Right - captionSpace);
+        int collapsedRight = Math.Max(_anchor.Left + ClosedSize.Width + 8, _anchor.Right - captionSpace);
         int x = collapsedRight - Width + (int)Math.Round(_offset.X * scale);
         x = Math.Clamp(x, work.Left, Math.Max(work.Left, work.Right - Width));
         int y = Math.Clamp(_anchor.Top + 3 + (int)Math.Round(_offset.Y * scale),

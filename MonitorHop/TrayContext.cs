@@ -18,6 +18,8 @@ internal sealed class TrayContext : ApplicationContext
     private string _cachedProcessName = "";
     private SettingsForm? _settingsDialog;
     private AppSettings _settings;
+    private bool _updateCheckStarted;
+    private bool _closing;
 
     public TrayContext()
     {
@@ -68,8 +70,11 @@ internal sealed class TrayContext : ApplicationContext
         _timer = new System.Windows.Forms.Timer { Interval = 500 };
         _timer.Tick += (_, _) =>
         {
-            if (_exitRequest.WaitOne(0)) ExitThread();
-            else RefreshOverlay();
+            if (_exitRequest.WaitOne(0)) { ExitThread(); return; }
+            RefreshOverlay();
+            if (_updateCheckStarted) return;
+            _updateCheckStarted = true;
+            _ = CheckForUpdatesAsync();
         };
         _timer.Start();
         ApplySettings();
@@ -239,6 +244,7 @@ internal sealed class TrayContext : ApplicationContext
         _exitItem.Text = T("Exit");
         _overlay.SetLanguage(_settings.Language);
         _overlay.SetDisplayMode(_settings.ShowMonitorMap);
+        _overlay.SetAppearance(_settings.IconOpacityPercent, _settings.IconSizePercent);
         _overlay.SetPositionOffset(_settings.OverlayOffsetX, _settings.OverlayOffsetY);
         _hotkeyWindow.Configure(_settings.Enabled ? _settings.HotkeyModifiers : null);
         if (_settings.Enabled && !_hotkeyWindow.Registered)
@@ -249,6 +255,7 @@ internal sealed class TrayContext : ApplicationContext
 
     protected override void ExitThreadCore()
     {
+        _closing = true;
         _timer.Stop();
         _timer.Dispose();
         _hotkeyWindow.Dispose();
@@ -257,6 +264,31 @@ internal sealed class TrayContext : ApplicationContext
         _tray.Visible = false;
         _tray.Dispose();
         base.ExitThreadCore();
+    }
+
+    private async Task CheckForUpdatesAsync()
+    {
+        ReleaseInfo? release;
+        try { release = await UpdateChecker.GetNewerReleaseAsync(CancellationToken.None); }
+        catch (HttpRequestException) { return; }
+        catch (TaskCanceledException) { return; }
+        catch (IOException) { return; }
+        catch (System.Text.Json.JsonException) { return; }
+        if (_closing || release is null) return;
+
+        string message = string.Format(T("UpdatePrompt"), UpdateChecker.InstalledVersion, release.Version);
+        if (MessageBox.Show(message, T("UpdateTitle"), MessageBoxButtons.YesNo,
+                MessageBoxIcon.Information) != DialogResult.Yes)
+            return;
+        try
+        {
+            Process.Start(new ProcessStartInfo(release.Page.AbsoluteUri) { UseShellExecute = true });
+        }
+        catch (System.ComponentModel.Win32Exception)
+        {
+            MessageBox.Show(T("UpdateOpenFailed"), T("UpdateTitle"),
+                MessageBoxButtons.OK, MessageBoxIcon.Warning);
+        }
     }
 
     private sealed class HotkeyWindow : NativeWindow, IDisposable

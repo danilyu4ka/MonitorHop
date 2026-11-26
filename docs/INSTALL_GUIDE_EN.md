@@ -32,11 +32,13 @@ For a nonstandard monitor layout, open Settings and select **Show monitor map in
 
 ## 4. Adjust settings and ignored apps
 
-Settings lets you change the language, hotkey modifiers, Windows startup, full-screen app handling, and the monitor map. Full-screen apps are ignored by default.
+Settings lets you change the language, hotkey modifiers, Windows startup, full-screen app handling, and the monitor map. Two sliders adjust the collapsed button's opacity and size. Full-screen apps are ignored by default.
 
 ![MonitorHop settings in English](images/settings-en.png)
 
 To ignore an application, use **Ignore this app** in the overlay menu, or tick it in the Settings list. This list shows only apps with visible windows on your screens. The **Advanced** section accepts process names manually, including apps that are not currently running.
+
+When MonitorHop starts, it checks the latest public GitHub release once. If that version is newer than yours, choose **Yes** to open its release page. Download the installer there, exit MonitorHop from the tray, and run the installer. Your settings stay in place. A failed or offline check does not interrupt startup.
 
 ## 5. Uninstall
 

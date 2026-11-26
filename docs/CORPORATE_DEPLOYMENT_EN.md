@@ -10,7 +10,9 @@ The selected installer language is written to the user settings file on a fresh 
 
 ## What the running app does
 
-MonitorHop runs as a normal interactive user process. It checks the foreground window twice per second, reads its window bounds and process name, and displays a small overlay when at least two monitors are active. It uses standard Windows window APIs to move a selected window. Global hotkeys use `RegisterHotKey`; they can be turned off in Settings. The app does not install a service, driver, browser extension, global event hook, or code in another process. It has no network, update, telemetry, or screen capture feature.
+MonitorHop runs as a normal interactive user process. It checks the foreground window twice per second, reads its window bounds and process name, and displays a small overlay when at least two monitors are active. It uses standard Windows window APIs to move a selected window. Global hotkeys use `RegisterHotKey`; they can be turned off in Settings. The app does not install a service, driver, browser extension, global event hook, or code in another process. It has no telemetry or screen capture feature.
+
+Once per launch, the app makes one HTTPS request to the public GitHub REST API for the latest published release of `danilyu4ka/MonitorHop`. If the release is newer, it asks the user before opening the fixed GitHub release page in the browser. It does not download or execute update binaries. Network errors and private-repository responses are ignored. The API request exposes the usual connection metadata to GitHub, including the user's IP address and the `MonitorHop/<version>` user agent. Administrators can block this endpoint if release checks are not wanted; the overlay continues to work offline.
 
 Settings are stored in `%LOCALAPPDATA%\MonitorHop\settings.json`. On first launch after updating from an older version, MonitorHop moves an existing settings file from the former folder to this location. Uninstall removes the installed app, shortcuts, uninstall entry, and startup value. It keeps the settings file for a future reinstall.
 
