@@ -27,7 +27,7 @@ internal static class Texts
         ["UpdateOpenFailed"] = ("Не удалось открыть страницу релиза.", "Could not open the release page.", "Väljalaske lehte ei õnnestunud avada."),
         ["IgnoredSetting"] = ("Игнорировать приложения (имя процесса, по одному на строку):", "Ignore apps (process name, one per line):", "Eira rakendusi (protsessi nimi, üks rea kohta):"),
         ["IgnoredHint"] = ("Имена процессов по одному на строку, например game.exe", "One process name per line, for example game.exe", "Üks protsessi nimi rea kohta, näiteks game.exe"),
-        ["ProcessList"] = ("Приложения с видимыми окнами (отметьте для игнорирования)", "Apps with visible windows (check to ignore)", "Nähtavate akendega rakendused (märgi eiramiseks)"),
+        ["ProcessList"] = ("Приложения на экране (отметьте для игнора)", "Visible apps (check to ignore)", "Ekraanil olevad rakendused (märgi eiramiseks)"),
         ["SearchProcesses"] = ("Поиск процесса…", "Search processes…", "Otsi protsessi…"),
         ["Refresh"] = ("Обновить", "Refresh", "Värskenda"),
         ["Process"] = ("Процесс", "Process", "Protsess"),

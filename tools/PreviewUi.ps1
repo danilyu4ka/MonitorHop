@@ -90,6 +90,14 @@ try {
         $settingsForm.DrawToBitmap($settingsBitmap, [System.Drawing.Rectangle]::new(0, 0, $settingsBitmap.Width, $settingsBitmap.Height))
         $settingsBitmap.Save((Join-Path $output 'settings-et-preview.png'), [System.Drawing.Imaging.ImageFormat]::Png)
         $languages.SelectedIndex = 0
+        [System.Windows.Forms.Application]::DoEvents()
+        $processLabel = $settingsFormType.GetField('_processLabel', $flags).GetValue($settingsForm)
+        $search = $settingsFormType.GetField('_search', $flags).GetValue($settingsForm)
+        if ($processLabel.Bottom -ge $search.Top) {
+            throw 'The process label overlaps the search field in Russian.'
+        }
+        $settingsForm.DrawToBitmap($settingsBitmap, [System.Drawing.Rectangle]::new(0, 0, $settingsBitmap.Width, $settingsBitmap.Height))
+        $settingsBitmap.Save((Join-Path $output 'settings-ru-preview.png'), [System.Drawing.Imaging.ImageFormat]::Png)
         $settingsFormType.GetField('_advancedToggle', $flags).GetValue($settingsForm).PerformClick()
         [System.Windows.Forms.Application]::DoEvents()
         $settingsForm.DrawToBitmap($settingsBitmap, [System.Drawing.Rectangle]::new(0, 0, $settingsBitmap.Width, $settingsBitmap.Height))
@@ -114,6 +122,24 @@ try {
         if ($result.CheckForUpdates) { throw 'Saving settings ignored the update-check preference.' }
     } finally { $settingsBitmap.Dispose() }
 } finally { $settingsForm.Dispose() }
+
+$settings.Language = 'ru'
+$largeSettingsForm = [System.Activator]::CreateInstance($settingsFormType, @($settings))
+try {
+    $largeSettingsForm.Font = [System.Drawing.Font]::new('Segoe UI', 13)
+    $largeSettingsForm.Show()
+    [System.Windows.Forms.Application]::DoEvents()
+    $processLabel = $settingsFormType.GetField('_processLabel', $flags).GetValue($largeSettingsForm)
+    $search = $settingsFormType.GetField('_search', $flags).GetValue($largeSettingsForm)
+    if ($processLabel.Bottom -ge $search.Top) {
+        throw 'The process label overlaps the search field with larger text.'
+    }
+    $largeBitmap = [System.Drawing.Bitmap]::new($largeSettingsForm.Width, $largeSettingsForm.Height)
+    try {
+        $largeSettingsForm.DrawToBitmap($largeBitmap, [System.Drawing.Rectangle]::new(0, 0, $largeBitmap.Width, $largeBitmap.Height))
+        $largeBitmap.Save((Join-Path $output 'settings-large-ru-preview.png'), [System.Drawing.Imaging.ImageFormat]::Png)
+    } finally { $largeBitmap.Dispose() }
+} finally { $largeSettingsForm.Dispose() }
 
 $overlayType = $assembly.GetType('MonitorHop.OverlayForm', $true)
 $overlay = [System.Activator]::CreateInstance($overlayType)

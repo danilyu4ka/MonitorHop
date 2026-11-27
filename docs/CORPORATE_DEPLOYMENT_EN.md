@@ -18,7 +18,7 @@ Settings are stored in `%LOCALAPPDATA%\MonitorHop\settings.json`. Unexpected err
 
 ## Review and trust
 
-The release includes `SHA256SUMS.txt` to verify downloaded files. Builds are currently unsigned. Windows SmartScreen or a corporate EDR may warn about an unfamiliar unsigned executable; local policy determines whether it may run. Code signing with an organization or publisher certificate is the appropriate next step for broader managed deployment. MonitorHop does not bypass such controls or request elevation to work around them.
+The release includes `SHA256SUMS.txt` to verify downloaded files. Builds are currently unsigned. Windows SmartScreen or a corporate EDR may warn about an unfamiliar unsigned executable; local policy determines whether it may run. The [code-signing options](CODE_SIGNING_EN.md) explain how a verified publisher can be added and why signing alone cannot promise an immediate SmartScreen reputation. MonitorHop does not bypass such controls or request elevation to work around them.
 
 Both release variants bundle .NET 10. Windows Update does not patch their bundled runtime; maintainers must rebuild and publish a new release after relevant .NET security updates.
 

@@ -25,6 +25,8 @@ internal sealed class SettingsForm : Form
     private readonly Label _hint;
     private readonly Button _save;
     private readonly Button _cancel;
+    private readonly Panel _content;
+    private readonly Panel _footer;
     private readonly HashSet<string> _ignoredNames;
     private List<VisibleApp> _running = [];
     private bool _populating;
@@ -73,7 +75,11 @@ internal sealed class SettingsForm : Form
         _size = new TrackBar { Left = 328, Top = 329, Width = 300, Height = 45,
             Minimum = 60, Maximum = 160, TickFrequency = 20,
             Value = Math.Clamp(settings.IconSizePercent, 60, 160) };
-        _processLabel = new Label { Left = 22, Top = 382, Width = 600, Height = 23 };
+        _processLabel = new Label
+        {
+            Left = 22, Top = 382, AutoSize = true,
+            MaximumSize = new Size(605, 0)
+        };
         _search = new TextBox { Left = 22, Top = 408, Width = 480, Height = 28 };
         _refresh = new Button { Left = 512, Top = 406, Width = 115, Height = 30 };
         _processes = new ListView
@@ -100,14 +106,18 @@ internal sealed class SettingsForm : Form
             ForeColor = SystemColors.GrayText,
             Font = new Font("Segoe UI", 8.5f), Visible = false
         };
-        _save = new Button { Left = 425, Top = 679, Width = 98, Height = 30, DialogResult = DialogResult.OK };
-        _cancel = new Button { Left = 530, Top = 679, Width = 97, Height = 30, DialogResult = DialogResult.Cancel };
+        _save = new Button { Left = 425, Top = 11, Width = 98, Height = 30, DialogResult = DialogResult.OK };
+        _cancel = new Button { Left = 530, Top = 11, Width = 97, Height = 30, DialogResult = DialogResult.Cancel };
+        _content = new Panel { Dock = DockStyle.Fill, AutoScroll = true };
+        _footer = new Panel { Dock = DockStyle.Bottom, Height = 52 };
 
-        Controls.AddRange([_enabled, _languageLabel, _language, _hotkeyLabel, _modifiers,
+        _content.Controls.AddRange([_enabled, _languageLabel, _language, _hotkeyLabel, _modifiers,
             _startup, _fullscreen, _monitorMap, _checkUpdates,
             _opacityLabel, _sizeLabel, _opacity, _size,
             _processLabel, _search, _refresh, _processes,
-            _advancedToggle, _advanced, _addNames, _hint, _save, _cancel]);
+            _advancedToggle, _advanced, _addNames, _hint]);
+        _footer.Controls.AddRange([_save, _cancel]);
+        Controls.AddRange([_content, _footer]);
         AcceptButton = _save;
         CancelButton = _cancel;
 
@@ -133,6 +143,7 @@ internal sealed class SettingsForm : Form
             _advanced.Visible = show;
             _addNames.Visible = show;
             _hint.Visible = show;
+            LayoutProcessSection();
         };
         _advanced.Leave += (_, _) => ApplyAdvancedNames();
         _addNames.Click += (_, _) => ApplyAdvancedNames();
@@ -158,6 +169,7 @@ internal sealed class SettingsForm : Form
         };
 
         ApplyLanguage();
+        Shown += (_, _) => LayoutProcessSection();
         RefreshProcesses();
     }
 
@@ -175,6 +187,7 @@ internal sealed class SettingsForm : Form
         _checkUpdates.Text = T("UpdateCheckSetting");
         ApplyAppearanceLabels();
         _processLabel.Text = T("ProcessList");
+        LayoutProcessSection();
         _search.PlaceholderText = T("SearchProcesses");
         _refresh.Text = T("Refresh");
         _processes.Columns[0].Text = T("Process");
@@ -185,6 +198,20 @@ internal sealed class SettingsForm : Form
         _hint.Text = T("IgnoredHint");
         _save.Text = T("Save");
         _cancel.Text = T("Cancel");
+    }
+
+    private void LayoutProcessSection()
+    {
+        _content.AutoScrollPosition = Point.Empty;
+        _search.Top = _processLabel.Bottom + 9;
+        _refresh.Top = _search.Top - 2;
+        _processes.Top = Math.Max(_search.Bottom, _refresh.Bottom) + 9;
+        _advancedToggle.Top = _processes.Bottom + 10;
+        _advanced.Top = _advancedToggle.Bottom + 7;
+        _addNames.Top = _advanced.Top;
+        _hint.Top = _advanced.Bottom + 4;
+        _content.AutoScrollMinSize = new Size(0,
+            (_advanced.Visible ? _hint.Bottom : _advancedToggle.Bottom) + 14);
     }
 
     private void ApplyAppearanceLabels()

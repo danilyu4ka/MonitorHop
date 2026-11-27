@@ -6,7 +6,7 @@ A small Windows 10/11 utility for moving the active window between monitors. [Do
 
 *Illustrated example: monitor 2 sits above and to the right of monitor 1; monitor 3 sits farther right and lower.*
 
-Created by [danilyu4ka](https://github.com/danilyu4ka). Licensed under [MIT](LICENSE). See the [corporate deployment notes](docs/CORPORATE_DEPLOYMENT_EN.md) for the install footprint and security details.
+Created by [danilyu4ka](https://github.com/danilyu4ka). Licensed under [MIT](LICENSE). See the [corporate deployment notes](docs/CORPORATE_DEPLOYMENT_EN.md) for the install footprint and security details, and [code-signing options](docs/CODE_SIGNING_EN.md) for SmartScreen behavior.
 
 ## How it works
 
