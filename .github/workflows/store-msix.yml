@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - codex/microsoft-store
+    tags:
+      - 'v*'
 
 permissions:
   contents: read
@@ -20,20 +22,14 @@ jobs:
           dotnet-version: '10.0.x'
       - name: Build unsigned MSIX
         shell: pwsh
-        env:
-          STORE_IDENTITY_NAME: ${{ vars.STORE_IDENTITY_NAME }}
-          STORE_IDENTITY_PUBLISHER: ${{ vars.STORE_IDENTITY_PUBLISHER }}
-          STORE_PUBLISHER_DISPLAY_NAME: ${{ vars.STORE_PUBLISHER_DISPLAY_NAME }}
-          STORE_APP_DISPLAY_NAME: ${{ vars.STORE_APP_DISPLAY_NAME }}
         run: |
-          $name = if ($env:STORE_IDENTITY_NAME) { $env:STORE_IDENTITY_NAME } else { 'MonitorHop.StorePreview' }
-          $publisher = if ($env:STORE_IDENTITY_PUBLISHER) { $env:STORE_IDENTITY_PUBLISHER } else { 'CN=MonitorHop Preview' }
-          $publisherDisplay = if ($env:STORE_PUBLISHER_DISPLAY_NAME) { $env:STORE_PUBLISHER_DISPLAY_NAME } else { 'MonitorHop Preview' }
-          $appDisplay = if ($env:STORE_APP_DISPLAY_NAME) { $env:STORE_APP_DISPLAY_NAME } else { 'MonitorHop' }
-          if (-not ($env:STORE_IDENTITY_NAME -and $env:STORE_IDENTITY_PUBLISHER -and $env:STORE_PUBLISHER_DISPLAY_NAME)) {
-            Write-Warning 'Preview identity only. This MSIX cannot be submitted to the Store.'
+          if ($env:GITHUB_REF -like 'refs/tags/*') {
+            if ($env:GITHUB_REF_NAME -notmatch '^v([0-9]+\.[0-9]+\.[0-9]+)$') { throw 'Expected a vMajor.Minor.Patch tag.' }
+            $version = $Matches[1]
+          } else {
+            $version = (dotnet msbuild MonitorHop/MonitorHop.csproj -getProperty:Version).Trim()
           }
-          ./tools/BuildStorePackage.ps1 -IdentityName $name -Publisher $publisher -PublisherDisplayName $publisherDisplay -AppDisplayName $appDisplay
+          ./tools/BuildStorePackage.ps1 -IdentityName 'danilyu4ka.MonitorHop' -Publisher 'CN=74354B7E-1810-49B4-A285-60F3FBB99F1A' -PublisherDisplayName 'danilyu4ka' -AppDisplayName 'MonitorHop' -Version $version
       - name: Upload package and listing logo
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:

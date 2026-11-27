@@ -1,20 +1,19 @@
 # Publishing MonitorHop in Microsoft Store
 
-This branch builds an **unsigned x64 MSIX** for Partner Center. Microsoft signs MSIX packages after certification and distributes their updates. The existing GitHub/Inno Setup release is a separate channel. The Store build omits the GitHub update prompt and uses the package Startup Task for **Start with Windows** instead of the `HKCU\Run` key.
+This branch builds an **unsigned x64 MSIX** for Partner Center, using the reserved MonitorHop product identity. Microsoft signs MSIX packages after certification and distributes their updates. The existing GitHub/Inno Setup release is a separate channel. The Store build omits the GitHub update prompt and uses the package Startup Task for **Start with Windows** instead of the `HKCU\Run` key. Its tray menu opens the Store updates page. The classic build's tray menu opens the [MonitorHop Store listing](https://apps.microsoft.com/detail/9NX8CCC9KPG3) so users can choose to switch channels.
 
 ## 1. Create the Store product
 
-1. Register at [storedeveloper.microsoft.com](https://storedeveloper.microsoft.com/), complete account verification, and open Partner Center. Choose the account type that matches how you publish: individual under your own name or company under a registered entity.
-2. Open **Apps & games → New product → MSIX or PWA app**. Check and reserve the desired product name. Reserve **MonitorHop** if available. If you must choose another name, pass it as `-AppDisplayName` when building.
-3. Open that product's **Product management → Product identity** page. Copy these three values exactly:
+1. Open the reserved **MonitorHop** product in [Partner Center](https://partner.microsoft.com/en-US/dashboard/products/9NX8CCC9KPG3/overview).
+2. Confirm these values on **Product management → Product identity** before each submission:
 
-   | Partner Center value | Build parameter | GitHub Actions variable |
-   | --- | --- | --- |
-   | `Package/Identity/Name` | `-IdentityName` | `STORE_IDENTITY_NAME` |
-   | `Package/Identity/Publisher` | `-Publisher` | `STORE_IDENTITY_PUBLISHER` |
-   | `Package/Properties/PublisherDisplayName` | `-PublisherDisplayName` | `STORE_PUBLISHER_DISPLAY_NAME` |
+   | Partner Center value | Reserved MonitorHop value |
+   | --- | --- |
+   | `Package/Identity/Name` | `danilyu4ka.MonitorHop` |
+   | `Package/Identity/Publisher` | `CN=74354B7E-1810-49B4-A285-60F3FBB99F1A` |
+   | `Package/Properties/PublisherDisplayName` | `danilyu4ka` |
 
-   If the reserved app name differs from MonitorHop, also set `-AppDisplayName` or `STORE_APP_DISPLAY_NAME` to that name. **Do not guess these identity values**; a package with preview values will fail Store association.
+   Store ID: `9NX8CCC9KPG3`. These are public package metadata, not signing secrets. Keep them unchanged for updates.
 
 ## 2. Build the upload file
 
@@ -22,9 +21,9 @@ On a Windows x64 machine, install the [.NET 10 SDK](https://dotnet.microsoft.com
 
 ```powershell
 ./tools/BuildStorePackage.ps1 `
-  -IdentityName 'PASTE_PACKAGE_IDENTITY_NAME' `
-  -Publisher 'PASTE_FULL_PUBLISHER_VALUE' `
-  -PublisherDisplayName 'PASTE_PUBLISHER_DISPLAY_NAME' `
+  -IdentityName 'danilyu4ka.MonitorHop' `
+  -Publisher 'CN=74354B7E-1810-49B4-A285-60F3FBB99F1A' `
+  -PublisherDisplayName 'danilyu4ka' `
   -AppDisplayName 'MonitorHop'
 ```
 
@@ -38,7 +37,7 @@ The output is unsigned. It is intended for **Partner Center upload only**, not d
 
 ### GitHub Actions option
 
-The **Build Microsoft Store MSIX** workflow runs when this branch receives a push. Without identity variables, it produces a **preview package** to validate the build; preview packages cannot be submitted. After copying the three values from Product identity, enter them at **GitHub repository → Settings → Secrets and variables → Actions → Variables** using the exact variable names in the table. Set `STORE_APP_DISPLAY_NAME` if the reserved name differs. Trigger a new push to this branch, then download the `monitorhop-store-msix` artifact from the successful Actions run. Unzip it to get the `.msix` and 300×300 logo. These identity values are public package metadata, not signing secrets.
+The **Build Microsoft Store MSIX** workflow runs on pushes to this branch and on release tags after the workflow is merged into the release branch. It already uses the real Product identity. Download the `monitorhop-store-msix` artifact from the successful Actions run and unzip it to get the `.msix` and 300×300 logo. GitHub releases alone do not update Store users: each new MSIX must also be submitted in Partner Center with a higher version and the same identity.
 
 ## 3. Prepare Store listing materials
 
@@ -63,7 +62,7 @@ Capture fresh screenshots from the current build on a desktop with two or more m
 
 ## 4. Test and submit
 
-Before submission, uninstall the classic Inno Setup build on the test PC so its tray process and `HKCU\Run` entry do not conflict with the Store build. Then test the **packaged** version on a clean Windows 10/11 x64 device or through a Partner Center package flight. Check the overlay on two monitors, one-monitor hiding, different display arrangements, settings layout at 100% and 150% scaling, startup toggle, update behavior, and removal through **Settings → Apps**. A package flight is preferable for end-to-end Store installation and signing validation. Do not install the unsigned `.msix` by double-clicking it. For local development registration, build with `-KeepStaging`, enable Developer Mode, and use `Add-AppxPackage -Register <staging path>\AppxManifest.xml`; this is a developer test, not the customer installation flow.
+Before submission, uninstall the classic Inno Setup build on the test PC so its tray process and `HKCU\Run` entry do not conflict with the Store build. Then test the **packaged** version on a clean Windows 10/11 x64 device or through a Partner Center package flight. Check the overlay on two monitors, one-monitor hiding, different display arrangements, settings layout at 100% and 150% scaling, startup toggle, update behavior, and removal through **Settings → Apps**. A package flight is preferable for end-to-end Store installation and signing validation. Do not install the unsigned `.msix` by double-clicking it. For local development registration, build with `-KeepStaging`, enable Developer Mode, and use `Add-AppxPackage -Register <staging path>\AppxManifest.xml`; this is a developer test, not the customer installation flow. The Store build takes over the running classic copy if both are present, but the user should still remove the old installation to prevent duplicate startup entries.
 
 For each update, increment the application version in `MonitorHop/MonitorHop.csproj` to a higher value, build a new package with the **same identity**, and use **Start update → Packages** in Partner Center. Store customers receive updates through Microsoft Store. Rebuild after .NET 10 security updates because the package includes its runtime.
 

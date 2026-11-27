@@ -11,7 +11,7 @@
     <PlatformTarget>x64</PlatformTarget>
     <AssemblyName>MonitorHop</AssemblyName>
     <RootNamespace>MonitorHop</RootNamespace>
-    <Version>1.5.4</Version>
+    <Version>1.5.5</Version>
     <ApplicationIcon>..\assets\monitorhop.ico</ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>

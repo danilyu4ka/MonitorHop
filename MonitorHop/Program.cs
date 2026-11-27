@@ -18,7 +18,11 @@ internal static class Program
         }
 
         using var mutex = new Mutex(true, "Local\\MonitorHop.SingleInstance", out bool firstInstance);
-        if (!firstInstance && args.Contains("--restart", StringComparer.OrdinalIgnoreCase) &&
+        bool replaceRunningInstance = args.Contains("--restart", StringComparer.OrdinalIgnoreCase);
+#if STORE_BUILD
+        replaceRunningInstance = true; // Store launches take over a running classic copy.
+#endif
+        if (!firstInstance && replaceRunningInstance &&
             EventWaitHandle.TryOpenExisting(@"Local\MonitorHop.ExitRequest", out var request))
         {
             using (request) request.Set();

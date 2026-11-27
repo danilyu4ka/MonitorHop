@@ -11,6 +11,7 @@ internal sealed class TrayContext : ApplicationContext
     private readonly EventWaitHandle _exitRequest;
     private readonly ToolStripMenuItem _enabledItem;
     private readonly ToolStripMenuItem _settingsItem;
+    private readonly ToolStripMenuItem _storeItem;
     private readonly ToolStripMenuItem _exitItem;
     private IntPtr _target;
     private IntPtr _cachedProcessWindow;
@@ -54,6 +55,8 @@ internal sealed class TrayContext : ApplicationContext
         menu.Items.Add(_enabledItem);
         _settingsItem = new ToolStripMenuItem("Settings…", null, (_, _) => OpenSettings());
         menu.Items.Add(_settingsItem);
+        _storeItem = new ToolStripMenuItem("Microsoft Store", null, (_, _) => OpenStore());
+        menu.Items.Add(_storeItem);
         menu.Items.Add(new ToolStripSeparator());
         _exitItem = new ToolStripMenuItem("Exit", null, (_, _) => ExitThread());
         menu.Items.Add(_exitItem);
@@ -241,10 +244,42 @@ internal sealed class TrayContext : ApplicationContext
 
     private string T(string key) => Texts.Get(_settings.Language, key);
 
+    private void OpenStore()
+    {
+#if STORE_BUILD
+        const string address = "ms-windows-store://downloadsandupdates";
+#else
+        const string address = "ms-windows-store://pdp/?ProductId=9NX8CCC9KPG3";
+#endif
+        try
+        {
+            Process.Start(new ProcessStartInfo(address) { UseShellExecute = true });
+#if !STORE_BUILD
+            // The Store build has the same single-instance mutex. Release it before
+            // the user launches the Store version after installation.
+            MessageBox.Show(T("StoreSwitchBody"), T("SwitchToStore"),
+                MessageBoxButtons.OK, MessageBoxIcon.Information);
+            ExitThread();
+#endif
+        }
+        catch (System.ComponentModel.Win32Exception)
+        {
+            _tray.ShowBalloonTip(3000, T("StoreOpenFailedTitle"),
+                T("StoreOpenFailedBody"), ToolTipIcon.Warning);
+        }
+    }
+
     private void ApplySettings()
     {
         _enabledItem.Text = T("Enabled");
         _settingsItem.Text = T("Settings");
+        _storeItem.Text = T(
+#if STORE_BUILD
+            "StoreUpdates"
+#else
+            "SwitchToStore"
+#endif
+        );
         _exitItem.Text = T("Exit");
         _overlay.SetLanguage(_settings.Language);
         _overlay.SetDisplayMode(_settings.ShowMonitorMap);
