@@ -8,6 +8,8 @@ A small Windows 10/11 utility for moving the active window between monitors. [Do
 
 Created by [danilyu4ka](https://github.com/danilyu4ka). Licensed under [MIT](LICENSE). See the [corporate deployment notes](docs/CORPORATE_DEPLOYMENT_EN.md) for the install footprint and security details, and [code-signing options](docs/CODE_SIGNING_EN.md) for SmartScreen behavior.
 
+The `codex/microsoft-store` branch contains a separate [Microsoft Store MSIX build and submission guide](docs/MICROSOFT_STORE_EN.md). It requires the product identity values from your Partner Center account before its package can be submitted.
+
 ## How it works
 
 When at least two monitors are active, a small translucent button appears beside the upper-right controls of the active window. Hover over it to open the move menu. Choose a direction or switch to a map that shows the actual monitor arrangement. MonitorHop places the window at approximately the same relative position on the destination monitor. Maximized windows remain maximized.

@@ -1,0 +1,45 @@
+name: Build Microsoft Store MSIX
+
+on:
+  push:
+    branches:
+      - codex/microsoft-store
+
+permissions:
+  contents: read
+
+jobs:
+  package:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-dotnet@0f4a354dd5547a28c70b7853dbd95d5b67886e73 # v6
+        with:
+          dotnet-version: '10.0.x'
+      - name: Build unsigned MSIX
+        shell: pwsh
+        env:
+          STORE_IDENTITY_NAME: ${{ vars.STORE_IDENTITY_NAME }}
+          STORE_IDENTITY_PUBLISHER: ${{ vars.STORE_IDENTITY_PUBLISHER }}
+          STORE_PUBLISHER_DISPLAY_NAME: ${{ vars.STORE_PUBLISHER_DISPLAY_NAME }}
+          STORE_APP_DISPLAY_NAME: ${{ vars.STORE_APP_DISPLAY_NAME }}
+        run: |
+          $name = if ($env:STORE_IDENTITY_NAME) { $env:STORE_IDENTITY_NAME } else { 'MonitorHop.StorePreview' }
+          $publisher = if ($env:STORE_IDENTITY_PUBLISHER) { $env:STORE_IDENTITY_PUBLISHER } else { 'CN=MonitorHop Preview' }
+          $publisherDisplay = if ($env:STORE_PUBLISHER_DISPLAY_NAME) { $env:STORE_PUBLISHER_DISPLAY_NAME } else { 'MonitorHop Preview' }
+          $appDisplay = if ($env:STORE_APP_DISPLAY_NAME) { $env:STORE_APP_DISPLAY_NAME } else { 'MonitorHop' }
+          if (-not ($env:STORE_IDENTITY_NAME -and $env:STORE_IDENTITY_PUBLISHER -and $env:STORE_PUBLISHER_DISPLAY_NAME)) {
+            Write-Warning 'Preview identity only. This MSIX cannot be submitted to the Store.'
+          }
+          ./tools/BuildStorePackage.ps1 -IdentityName $name -Publisher $publisher -PublisherDisplayName $publisherDisplay -AppDisplayName $appDisplay
+      - name: Upload package and listing logo
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: monitorhop-store-msix
+          path: |
+            artifacts/store/*.msix
+            artifacts/store/SHA256SUMS.txt
+            artifacts/store/Store-listing-logo-300x300.png
+          if-no-files-found: error

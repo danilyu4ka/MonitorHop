@@ -67,6 +67,10 @@ internal sealed class SettingsForm : Form
         _fullscreen = new CheckBox { Left = 22, Top = 211, Width = 600, Height = 26, Checked = settings.IgnoreFullscreen };
         _monitorMap = new CheckBox { Left = 22, Top = 242, Width = 600, Height = 26, Checked = settings.ShowMonitorMap };
         _checkUpdates = new CheckBox { Left = 22, Top = 273, Width = 600, Height = 26, Checked = settings.CheckForUpdates };
+#if STORE_BUILD
+        _checkUpdates.Visible = false; // Microsoft Store manages package updates.
+        _checkUpdates.Checked = false;
+#endif
         _opacityLabel = new Label { Left = 22, Top = 305, Width = 280, Height = 23 };
         _sizeLabel = new Label { Left = 335, Top = 305, Width = 290, Height = 23 };
         _opacity = new TrackBar { Left = 15, Top = 329, Width = 290, Height = 45,

@@ -75,7 +75,9 @@ internal sealed class TrayContext : ApplicationContext
             if (_updateCheckStarted) return;
             _updateCheckStarted = true;
             if (!_settings.CheckForUpdates) return;
+#if !STORE_BUILD
             _ = CheckForUpdatesAsync();
+#endif
         };
         _timer.Start();
         ApplySettings();
@@ -211,6 +213,7 @@ internal sealed class TrayContext : ApplicationContext
             try { StartupManager.Apply(_settings.StartWithWindows); }
             catch (UnauthorizedAccessException) { ShowStartupError(); }
             catch (System.Security.SecurityException) { ShowStartupError(); }
+            catch (InvalidOperationException) { ShowStartupError(); }
             _enabledItem.Checked = _settings.Enabled;
             PersistSettings();
             ApplySettings();
