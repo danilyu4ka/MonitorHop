@@ -50,7 +50,7 @@ In Partner Center, create a new submission and fill the required sections (the e
 | **Properties / Age ratings** | Describe the app honestly and complete the questionnaire. It is a desktop window-management utility. |
 | **Packages** | Upload the newly built `.msix` with the *real* Product identity values. Target architecture is x64; the minimum OS is Windows 10 2004 (build 19041). |
 | **Store listing** | Enter the reserved app name, a short description, the full description below, and category such as **Utilities & tools**. Upload the generated 300×300 logo and **at least one real PNG screenshot** of the running app at 1366×768 pixels or larger. |
-| **Privacy policy / Support info** | Link to [MonitorHop privacy policy](PRIVACY_EN.md) using a public GitHub URL. Use the [issues page](https://github.com/danilyu4ka/MonitorHop/issues) for support and the [repository](https://github.com/danilyu4ka/MonitorHop) as website. |
+| **Privacy policy / Support info** | Use `https://github.com/danilyu4ka/MonitorHop/blob/codex/microsoft-store/docs/PRIVACY_EN.md` for the privacy-policy URL. Use the [issues page](https://github.com/danilyu4ka/MonitorHop/issues) for support and the [repository](https://github.com/danilyu4ka/MonitorHop) as website. |
 | **Submission options** | Choose your release timing, review the summary, then submit for certification. |
 
 Suggested short description: `Move the active window to another monitor from a small overlay or a keyboard shortcut.`
@@ -63,7 +63,7 @@ Capture fresh screenshots from the current build on a desktop with two or more m
 
 ## 4. Test and submit
 
-Before submission, test the **packaged** version on a clean Windows 10/11 x64 device or through a Partner Center package flight. Check the overlay on two monitors, one-monitor hiding, different display arrangements, settings layout at 100% and 150% scaling, startup toggle, update behavior, and removal through **Settings → Apps**. A package flight is preferable for end-to-end Store installation and signing validation. Do not install the unsigned `.msix` by double-clicking it. For local development registration, build with `-KeepStaging`, enable Developer Mode, and use `Add-AppxPackage -Register <staging path>\AppxManifest.xml`; this is a developer test, not the customer installation flow.
+Before submission, uninstall the classic Inno Setup build on the test PC so its tray process and `HKCU\Run` entry do not conflict with the Store build. Then test the **packaged** version on a clean Windows 10/11 x64 device or through a Partner Center package flight. Check the overlay on two monitors, one-monitor hiding, different display arrangements, settings layout at 100% and 150% scaling, startup toggle, update behavior, and removal through **Settings → Apps**. A package flight is preferable for end-to-end Store installation and signing validation. Do not install the unsigned `.msix` by double-clicking it. For local development registration, build with `-KeepStaging`, enable Developer Mode, and use `Add-AppxPackage -Register <staging path>\AppxManifest.xml`; this is a developer test, not the customer installation flow.
 
 For each update, increment the application version in `MonitorHop/MonitorHop.csproj` to a higher value, build a new package with the **same identity**, and use **Start update → Packages** in Partner Center. Store customers receive updates through Microsoft Store. Rebuild after .NET 10 security updates because the package includes its runtime.
 
